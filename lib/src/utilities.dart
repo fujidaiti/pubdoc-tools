@@ -16,8 +16,12 @@ String unescapeHtml(String text) {
 /// Extracts the first paragraph from a documentation string.
 String extractSummary(String? documentation) {
   if (documentation == null || documentation.isEmpty) return '';
-  var firstParagraph = documentation.split(RegExp(r'\n\s*\n')).first;
-  return firstParagraph.trim();
+  var paragraphs = documentation.split(RegExp(r'\n\s*\n'));
+  for (var p in paragraphs) {
+    var trimmed = p.trim();
+    if (trimmed.isNotEmpty) return trimmed;
+  }
+  return '';
 }
 
 /// Strips residual HTML artifacts from documentation text.
