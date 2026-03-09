@@ -52,7 +52,7 @@ String renderDeclaration(Container container) {
     // Supertype
     if (container.supertype != null) {
       var supertypeName = container.supertype!.nameWithGenericsPlain;
-      if (supertypeName != 'Object') {
+      if (supertypeName != 'Object' && supertypeName != 'Enum') {
         buffer.write(' extends $supertypeName');
       }
     }
