@@ -219,9 +219,9 @@ class MarkdownRenderer {
       }
     }
 
-    // Methods
-    for (var method in container.availableInstanceMethodsSorted.where(
-      (m) => m.isPublic,
+    // Methods (declared only)
+    for (var method in container.declaredMethods.whereType<Method>().where(
+      (m) => !m.isOperator && m.isPublic,
     )) {
       if (needsDetailPage(method, _options)) {
         var content = renderDetailPage(method, container.name, _options);
@@ -241,10 +241,8 @@ class MarkdownRenderer {
       }
     }
 
-    // Operators
-    for (var op in container.availableInstanceOperatorsSorted.where(
-      (o) => o.isPublic,
-    )) {
+    // Operators (declared only)
+    for (var op in container.declaredOperators.where((o) => o.isPublic)) {
       if (needsDetailPage(op, _options)) {
         var safeName = safeFileName('operator ${op.element.name}');
         var content = renderDetailPage(op, container.name, _options);

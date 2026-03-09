@@ -1,3 +1,18 @@
+/// Unescapes HTML entities in source code.
+///
+/// dartdoc's model applies `HtmlEscape` to source code since it's intended
+/// for HTML output. We need to reverse this for Markdown output.
+String unescapeHtml(String text) {
+  return text
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#x27;', "'")
+      .replaceAll('&#x2F;', '/');
+}
+
 /// Extracts the first paragraph from a documentation string.
 String extractSummary(String? documentation) {
   if (documentation == null || documentation.isEmpty) return '';

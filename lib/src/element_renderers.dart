@@ -67,24 +67,22 @@ String renderContainer(Container container, RenderOptions options) {
     }
   }
 
-  // Properties
-  var publicInstanceFields = container.availableInstanceFieldsSorted
-      .where((f) => f.isPublic)
+  // Properties (declared only, not inherited, excluding enum values)
+  var publicFields = container.declaredFields
+      .where((f) => f.isPublic && !f.isEnumValue)
       .toList();
-  var publicStaticFields = container.staticFields
-      .where((f) => f.isPublic)
-      .toList();
-  var allPublicFields = [...publicInstanceFields, ...publicStaticFields];
-  if (allPublicFields.isNotEmpty) {
+  if (publicFields.isNotEmpty) {
     buffer.writeln('## Properties');
     buffer.writeln();
-    for (var field in allPublicFields) {
+    for (var field in publicFields) {
       buffer.write(_renderField(field));
     }
   }
 
-  // Methods
-  var publicMethods = container.availableInstanceMethodsSorted
+  // Methods (declared only, not inherited)
+  var publicMethods = container.declaredMethods
+      .whereType<Method>()
+      .where((m) => !m.isOperator)
       .where((m) => m.isPublic)
       .toList();
   var publicStaticMethods = container.staticMethods
@@ -99,8 +97,8 @@ String renderContainer(Container container, RenderOptions options) {
     }
   }
 
-  // Operators
-  var publicOperators = container.availableInstanceOperatorsSorted
+  // Operators (declared only, not inherited)
+  var publicOperators = container.declaredOperators
       .where((o) => o.isPublic)
       .toList();
   if (publicOperators.isNotEmpty) {
@@ -181,7 +179,7 @@ String renderTopLevelProperties(Library library) {
       buffer.writeln('### ${c.name} → ${c.modelType.nameWithGenericsPlain}');
       buffer.writeln();
       if (c.constantValue != null) {
-        buffer.writeln('`${c.constantValue}`');
+        buffer.writeln('`${unescapeHtml(c.constantValue!)}`');
         buffer.writeln();
       }
       var doc = _cleanDoc(c.documentation);
@@ -228,7 +226,7 @@ String renderTypedefs(Library library) {
     buffer.writeln('## ${td.name}');
     buffer.writeln();
     buffer.writeln('```dart');
-    buffer.writeln(td.sourceCode);
+    buffer.writeln(unescapeHtml(td.sourceCode));
     buffer.writeln('```');
     buffer.writeln();
 
@@ -279,7 +277,7 @@ String renderDetailPage(
   buffer.writeln('## Source');
   buffer.writeln();
   buffer.writeln('```dart');
-  buffer.writeln(element.sourceCode);
+  buffer.writeln(unescapeHtml(element.sourceCode));
   buffer.writeln('```');
 
   return buffer.toString();
@@ -418,7 +416,7 @@ String _renderMethod(
     buffer.writeln();
   }
 
-  if (options.includeSource && !method.isAbstract) {
+  if (options.includeSource && !method.element.isAbstract) {
     _writeSource(
       buffer,
       method,
@@ -447,7 +445,7 @@ String _renderOperator(
     buffer.writeln();
   }
 
-  if (options.includeSource && !op.isAbstract) {
+  if (options.includeSource && !op.element.isAbstract) {
     var safeName = safeFileName('operator ${op.element.name}');
     _writeSource(buffer, op, '$containerName/$safeName', options);
   }
@@ -466,7 +464,7 @@ void _writeSource(
   String detailPath,
   RenderOptions options,
 ) {
-  var source = element.sourceCode;
+  var source = unescapeHtml(element.sourceCode);
   if (source.isEmpty) return;
 
   var lineCount = sourceLineCount(source);
@@ -484,9 +482,9 @@ void _writeSource(
 /// Returns true if a detail page is needed for this element.
 bool needsDetailPage(ModelElement element, RenderOptions options) {
   if (!options.includeSource) return false;
-  if (element is Method && element.isAbstract) return false;
-  if (element is Operator && element.isAbstract) return false;
-  var source = element.sourceCode;
+  if (element is Method && element.element.isAbstract) return false;
+  if (element is Operator && element.element.isAbstract) return false;
+  var source = unescapeHtml(element.sourceCode);
   if (source.isEmpty) return false;
   return sourceLineCount(source) > options.sourceLineThreshold;
 }
@@ -504,7 +502,7 @@ void _writeCategorySection(
   buffer.writeln();
   for (var element in publicElements) {
     var lib = element.library;
-    if (element is Container) {
+    if (element is Container && lib != null) {
       buffer.writeln('- [${element.name}](${lib.dirName}/${element.name}.md)');
     } else {
       buffer.writeln('- ${element.name}');
