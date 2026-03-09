@@ -1,0 +1,6 @@
+dartdoc:
+  categories:
+    "Getting Started":
+      markdown: doc/getting-started.md
+    "Utilities":
+      markdown: utilities.md

@@ -70,7 +70,9 @@ class MarkdownRenderer {
       for (var category in package.documentedCategoriesSorted) {
         var summary = extractSummary(category.documentation);
         var desc = summary.isNotEmpty ? ' — $summary' : '';
-        buffer.writeln('- [${category.name}](topics/${category.name}.md)$desc');
+        buffer.writeln(
+          '- [${category.name}](topics/${_topicFileName(category)})$desc',
+        );
       }
       buffer.writeln();
     }
@@ -267,8 +269,14 @@ class MarkdownRenderer {
 
     for (var category in package.documentedCategoriesSorted) {
       var content = renderCategory(category);
-      _writeFile(p.join('topics', '${category.name}.md'), content);
+      _writeFile(p.join('topics', _topicFileName(category)), content);
     }
+  }
+
+  String _topicFileName(Category category) {
+    final docFile = category.documentationFile;
+    if (docFile != null) return p.basename(docFile.path);
+    return '${category.name.replaceAll(RegExp(r'\s+'), '_')}.md';
   }
 
   void _writeElementList(
