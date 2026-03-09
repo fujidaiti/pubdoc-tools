@@ -84,6 +84,27 @@ void main() {
     });
   });
 
+  group('src library filtering', () {
+    test('does not create src/ directory in output', () {
+      expect(Directory(p.join(outputDir.path, 'src')).existsSync(), isFalse);
+    });
+
+    test('index.md does not reference src libraries', () {
+      var content = File(p.join(outputDir.path, 'index.md')).readAsStringSync();
+      expect(content, isNot(contains('src/')));
+    });
+
+    test('re-exported elements appear under top-level library', () {
+      // MyClass is defined in lib/src/my_class.dart but exported by lib/basic_library.dart
+      expect(
+        File(
+          p.join(outputDir.path, 'basic_library', 'MyClass.md'),
+        ).existsSync(),
+        isTrue,
+      );
+    });
+  });
+
   group('package index content', () {
     test('contains package name', () {
       var content = File(p.join(outputDir.path, 'index.md')).readAsStringSync();

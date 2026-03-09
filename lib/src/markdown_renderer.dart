@@ -32,7 +32,7 @@ class MarkdownRenderer {
 
     _renderPackageIndex(package);
 
-    for (var lib in package.publicLibrariesSorted) {
+    for (var lib in _documentedLibraries(package)) {
       _renderLibrary(lib);
     }
 
@@ -52,10 +52,11 @@ class MarkdownRenderer {
       buffer.writeln();
     }
 
-    if (package.publicLibrariesSorted.isNotEmpty) {
+    var documentedLibraries = _documentedLibraries(package);
+    if (documentedLibraries.isNotEmpty) {
       buffer.writeln('## Libraries');
       buffer.writeln();
-      for (var lib in package.publicLibrariesSorted) {
+      for (var lib in documentedLibraries) {
         var summary = extractSummary(lib.documentation);
         var desc = summary.isNotEmpty ? ' — $summary' : '';
         buffer.writeln('- [${lib.name}](${lib.displayName}/index.md)$desc');
@@ -286,6 +287,12 @@ class MarkdownRenderer {
       buffer.writeln('- [${element.name}](${element.name}.md)$desc');
     }
     buffer.writeln();
+  }
+
+  List<Library> _documentedLibraries(Package package) {
+    return package.publicLibrariesSorted
+        .where((lib) => !lib.displayName.startsWith('src/'))
+        .toList();
   }
 
   void _writeFile(String relativePath, String content) {

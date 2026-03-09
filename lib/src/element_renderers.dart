@@ -497,9 +497,11 @@ void _writeCategorySection(
   buffer.writeln('### $heading');
   buffer.writeln();
   for (var element in publicElements) {
-    var lib = element.library;
+    var lib = element.canonicalLibrary ?? element.library;
     if (element is Container && lib != null) {
-      buffer.writeln('- [${element.name}](${lib.dirName}/${element.name}.md)');
+      buffer.writeln(
+        '- [${element.name}](${lib.displayName}/${element.name}.md)',
+      );
     } else {
       buffer.writeln('- ${element.name}');
     }
