@@ -7,8 +7,7 @@ environment:
 
 dependencies:
   args: ^2.7.0
-  dartdoc:
-    path: dartdoc
+  dartdoc: ^9.0.4
   mustache_template: ^2.0.0
   path: ^1.8.3
 
