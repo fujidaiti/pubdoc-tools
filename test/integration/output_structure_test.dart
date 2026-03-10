@@ -181,6 +181,39 @@ void main() {
       ).readAsStringSync();
       expect(content, contains('top-level-functions/top-level-functions.md'));
     });
+
+    test('"See" references include "for more details."', () {
+      var content = File(
+        p.join(outputDir.path, 'basic_library', 'index.md'),
+      ).readAsStringSync();
+      expect(
+        content,
+        contains(
+          'See [top-level-functions.md](top-level-functions/top-level-functions.md) for more details.',
+        ),
+      );
+      expect(
+        content,
+        contains(
+          'See [top-level-properties.md](top-level-properties/top-level-properties.md) for more details.',
+        ),
+      );
+    });
+
+    test('lists functions inline', () {
+      var content = File(
+        p.join(outputDir.path, 'basic_library', 'index.md'),
+      ).readAsStringSync();
+      expect(content, contains('- add — A simple top-level function.'));
+    });
+
+    test('lists properties inline', () {
+      var content = File(
+        p.join(outputDir.path, 'basic_library', 'index.md'),
+      ).readAsStringSync();
+      expect(content, contains('- defaultName — A top-level constant.'));
+      expect(content, contains('- globalCounter — A top-level variable.'));
+    });
   });
 
   group('class file content', () {
@@ -331,6 +364,36 @@ void main() {
       ).readAsStringSync();
       expect(content, contains('## Source'));
       expect(content, contains("throw ArgumentError('name is required')"));
+    });
+  });
+
+  group('edge_cases library index', () {
+    late Directory edgeCasesOutputDir;
+
+    setUpAll(() async {
+      edgeCasesOutputDir = await renderFixture('edge_cases');
+    });
+
+    test('lists typedefs inline', () {
+      var content = File(
+        p.join(edgeCasesOutputDir.path, 'edge_cases', 'index.md'),
+      ).readAsStringSync();
+      expect(
+        content,
+        contains(
+          '- StringCallback — A typedef for a callback that takes a [String].',
+        ),
+      );
+    });
+
+    test('"See" reference for typedefs includes "for more details."', () {
+      var content = File(
+        p.join(edgeCasesOutputDir.path, 'edge_cases', 'index.md'),
+      ).readAsStringSync();
+      expect(
+        content,
+        contains('See [typedefs.md](typedefs/typedefs.md) for more details.'),
+      );
     });
   });
 }

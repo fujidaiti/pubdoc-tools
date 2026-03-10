@@ -134,32 +134,60 @@ class MarkdownRenderer {
     );
 
     // Functions reference
-    if (library.functions.any((f) => f.isPublic)) {
+    var publicFunctions = library.functions.where((f) => f.isPublic).toList();
+    if (publicFunctions.isNotEmpty) {
       buffer.writeln('## Functions');
       buffer.writeln();
       buffer.writeln(
-        'See [top-level-functions.md](top-level-functions/top-level-functions.md)',
+        'See [top-level-functions.md](top-level-functions/top-level-functions.md) for more details.',
       );
+      buffer.writeln();
+      for (var func in publicFunctions) {
+        var summary = extractSummary(func.documentation);
+        var desc = summary.isNotEmpty ? ' — $summary' : '';
+        buffer.writeln('- ${func.name}$desc');
+      }
       buffer.writeln();
     }
 
     // Properties reference
-    var hasProperties = library.properties.any((p) => p.isPublic);
-    var hasConstants = library.constants.any((c) => c.isPublic);
-    if (hasProperties || hasConstants) {
+    var publicProperties =
+        library.properties.where((p) => p.isPublic).toList();
+    var publicConstants = library.constants.where((c) => c.isPublic).toList();
+    if (publicProperties.isNotEmpty || publicConstants.isNotEmpty) {
       buffer.writeln('## Properties');
       buffer.writeln();
       buffer.writeln(
-        'See [top-level-properties.md](top-level-properties/top-level-properties.md)',
+        'See [top-level-properties.md](top-level-properties/top-level-properties.md) for more details.',
       );
+      buffer.writeln();
+      for (var constant in publicConstants) {
+        var summary = extractSummary(constant.documentation);
+        var desc = summary.isNotEmpty ? ' — $summary' : '';
+        buffer.writeln('- ${constant.name}$desc');
+      }
+      for (var prop in publicProperties) {
+        var summary = extractSummary(prop.documentation);
+        var desc = summary.isNotEmpty ? ' — $summary' : '';
+        buffer.writeln('- ${prop.name}$desc');
+      }
       buffer.writeln();
     }
 
     // Typedefs reference
-    if (library.typedefs.any((t) => t.isPublic)) {
+    var publicTypedefs = library.typedefs.where((t) => t.isPublic).toList();
+    if (publicTypedefs.isNotEmpty) {
       buffer.writeln('## Typedefs');
       buffer.writeln();
-      buffer.writeln('See [typedefs.md](typedefs/typedefs.md)');
+      buffer.writeln(
+        'See [typedefs.md](typedefs/typedefs.md) for more details.',
+      );
+      buffer.writeln();
+      for (var typedef in publicTypedefs) {
+        var summary = extractSummary(typedef.documentation);
+        var desc = summary.isNotEmpty ? ' — $summary' : '';
+        buffer.writeln('- ${typedef.name}$desc');
+      }
       buffer.writeln();
     }
 
