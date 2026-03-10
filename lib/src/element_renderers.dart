@@ -152,7 +152,7 @@ String renderTopLevelFunctions(Library library, RenderOptions options) {
     }
 
     if (options.includeSource) {
-      _writeSource(buffer, func, 'top-level-functions/${func.name}', options);
+      _writeSource(buffer, func, func.name, options);
     }
 
     buffer.writeln('---');
