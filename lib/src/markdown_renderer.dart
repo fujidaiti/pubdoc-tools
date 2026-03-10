@@ -137,7 +137,9 @@ class MarkdownRenderer {
     if (library.functions.any((f) => f.isPublic)) {
       buffer.writeln('## Functions');
       buffer.writeln();
-      buffer.writeln('See [top-level-functions.md](top-level-functions.md)');
+      buffer.writeln(
+        'See [top-level-functions.md](top-level-functions/top-level-functions.md)',
+      );
       buffer.writeln();
     }
 
@@ -147,7 +149,9 @@ class MarkdownRenderer {
     if (hasProperties || hasConstants) {
       buffer.writeln('## Properties');
       buffer.writeln();
-      buffer.writeln('See [top-level-properties.md](top-level-properties.md)');
+      buffer.writeln(
+        'See [top-level-properties.md](top-level-properties/top-level-properties.md)',
+      );
       buffer.writeln();
     }
 
@@ -155,7 +159,7 @@ class MarkdownRenderer {
     if (library.typedefs.any((t) => t.isPublic)) {
       buffer.writeln('## Typedefs');
       buffer.writeln();
-      buffer.writeln('See [typedefs.md](typedefs.md)');
+      buffer.writeln('See [typedefs.md](typedefs/typedefs.md)');
       buffer.writeln();
     }
 
@@ -181,20 +185,26 @@ class MarkdownRenderer {
     // Top-level functions
     var functionsContent = renderTopLevelFunctions(library, _options);
     if (functionsContent.isNotEmpty) {
-      _writeFile(p.join(libDir, 'top-level-functions.md'), functionsContent);
+      _writeFile(
+        p.join(libDir, 'top-level-functions', 'top-level-functions.md'),
+        functionsContent,
+      );
       _renderDetailPagesForFunctions(library, libDir);
     }
 
     // Top-level properties
     var propertiesContent = renderTopLevelProperties(library);
     if (propertiesContent.isNotEmpty) {
-      _writeFile(p.join(libDir, 'top-level-properties.md'), propertiesContent);
+      _writeFile(
+        p.join(libDir, 'top-level-properties', 'top-level-properties.md'),
+        propertiesContent,
+      );
     }
 
     // Typedefs
     var typedefsContent = renderTypedefs(library);
     if (typedefsContent.isNotEmpty) {
-      _writeFile(p.join(libDir, 'typedefs.md'), typedefsContent);
+      _writeFile(p.join(libDir, 'typedefs', 'typedefs.md'), typedefsContent);
     }
   }
 

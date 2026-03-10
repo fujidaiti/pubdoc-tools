@@ -52,7 +52,12 @@ void main() {
     test('creates top-level-functions.md', () {
       expect(
         File(
-          p.join(outputDir.path, 'basic_library', 'top-level-functions.md'),
+          p.join(
+            outputDir.path,
+            'basic_library',
+            'top-level-functions',
+            'top-level-functions.md',
+          ),
         ).existsSync(),
         isTrue,
       );
@@ -61,7 +66,12 @@ void main() {
     test('creates top-level-properties.md', () {
       expect(
         File(
-          p.join(outputDir.path, 'basic_library', 'top-level-properties.md'),
+          p.join(
+            outputDir.path,
+            'basic_library',
+            'top-level-properties',
+            'top-level-properties.md',
+          ),
         ).existsSync(),
         isTrue,
       );
@@ -169,7 +179,7 @@ void main() {
       var content = File(
         p.join(outputDir.path, 'basic_library', 'index.md'),
       ).readAsStringSync();
-      expect(content, contains('top-level-functions.md'));
+      expect(content, contains('top-level-functions/top-level-functions.md'));
     });
   });
 
