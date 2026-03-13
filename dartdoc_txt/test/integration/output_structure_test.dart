@@ -1,180 +1,128 @@
-import 'dart:io';
-
-import 'package:path/path.dart' as p;
+import 'package:dartdoc_txt/dartdoc_txt.dart';
 import 'package:test/test.dart';
 
 import '../test_helper.dart';
 
 void main() {
-  late Directory outputDir;
+  late DocDir docTree;
 
   setUpAll(() async {
-    outputDir = await renderFixture('basic_library');
+    docTree = await renderFixture('basic_library');
   });
 
   group('output structure', () {
     test('creates INDEX.md at root', () {
-      expect(File(p.join(outputDir.path, 'INDEX.md')).existsSync(), isTrue);
+      expect(docTree.findFile('INDEX.md'), isNotNull);
     });
 
     test('creates library directory', () {
-      expect(
-        Directory(p.join(outputDir.path, 'basic_library')).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findDir('basic_library'), isNotNull);
     });
 
     test('does not create library INDEX.md', () {
-      expect(
-        File(p.join(outputDir.path, 'basic_library', 'INDEX.md')).existsSync(),
-        isFalse,
-      );
+      expect(docTree.findFile('basic_library/INDEX.md'), isNull);
     });
 
     test('creates README.md at root', () {
-      expect(File(p.join(outputDir.path, 'README.md')).existsSync(), isTrue);
+      expect(docTree.findFile('README.md'), isNotNull);
     });
 
     test('creates class file', () {
-      expect(
-        File(
-          p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-        ).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findFile('basic_library/MyClass/MyClass.md'), isNotNull);
     });
 
     test('creates enum file', () {
-      expect(
-        File(
-          p.join(outputDir.path, 'basic_library', 'Color', 'Color.md'),
-        ).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findFile('basic_library/Color/Color.md'), isNotNull);
     });
 
     test('creates top-level-functions.md', () {
       expect(
-        File(
-          p.join(
-            outputDir.path,
-            'basic_library',
-            'top-level-functions',
-            'top-level-functions.md',
-          ),
-        ).existsSync(),
-        isTrue,
+        docTree.findFile(
+          'basic_library/top-level-functions/top-level-functions.md',
+        ),
+        isNotNull,
       );
     });
 
     test('creates top-level-properties.md', () {
       expect(
-        File(
-          p.join(
-            outputDir.path,
-            'basic_library',
-            'top-level-properties',
-            'top-level-properties.md',
-          ),
-        ).existsSync(),
-        isTrue,
+        docTree.findFile(
+          'basic_library/top-level-properties/top-level-properties.md',
+        ),
+        isNotNull,
       );
     });
 
     test('creates detail subdirectory for class with large method', () {
-      expect(
-        Directory(
-          p.join(outputDir.path, 'basic_library', 'MyClass'),
-        ).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findDir('basic_library/MyClass'), isNotNull);
     });
 
     test('creates detail page for method exceeding threshold', () {
       expect(
-        File(
-          p.join(
-            outputDir.path,
-            'basic_library',
-            'MyClass',
-            'MyClass-processData.md',
-          ),
-        ).existsSync(),
-        isTrue,
+        docTree.findFile('basic_library/MyClass/MyClass-processData.md'),
+        isNotNull,
       );
     });
 
     test('creates detail page for named constructor exceeding threshold', () {
       expect(
-        File(
-          p.join(
-            outputDir.path,
-            'basic_library',
-            'MyClass',
-            'MyClass-fromMap.md',
-          ),
-        ).existsSync(),
-        isTrue,
+        docTree.findFile('basic_library/MyClass/MyClass-fromMap.md'),
+        isNotNull,
       );
     });
   });
 
   group('src library filtering', () {
     test('does not create src/ directory in output', () {
-      expect(Directory(p.join(outputDir.path, 'src')).existsSync(), isFalse);
+      expect(docTree.findDir('src'), isNull);
     });
 
     test('INDEX.md does not reference src libraries', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, isNot(contains('src/')));
     });
 
     test('re-exported elements appear under top-level library', () {
       // MyClass is defined in lib/src/my_class.dart but exported by lib/basic_library.dart
-      expect(
-        File(
-          p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-        ).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findFile('basic_library/MyClass/MyClass.md'), isNotNull);
     });
   });
 
   group('package index content', () {
     test('contains package name', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('# basic_library Index'));
     });
 
     test('contains version', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('Version: 1.0.0'));
     });
 
     test('contains library heading', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('## basic_library library'));
     });
   });
 
   group('library index content', () {
     test('contains library name', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('## basic_library library'));
     });
 
     test('lists classes', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('[MyClass](basic_library/MyClass/MyClass.md)'));
     });
 
     test('lists enums', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('[Color](basic_library/Color/Color.md)'));
     });
 
     test('references top-level functions file', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(
         content,
         contains('basic_library/top-level-functions/top-level-functions.md'),
@@ -182,7 +130,7 @@ void main() {
     });
 
     test('"See" references include "for more details."', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(
         content,
         contains(
@@ -198,12 +146,12 @@ void main() {
     });
 
     test('lists functions inline', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('- add — A simple top-level function.'));
     });
 
     test('lists properties inline', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('- defaultName — A top-level constant.'));
       expect(content, contains('- globalCounter — A top-level variable.'));
     });
@@ -211,55 +159,55 @@ void main() {
 
   group('class file content', () {
     test('contains class declaration', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, contains('```dart\nclass MyClass\n```'));
     });
 
     test('contains documentation', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, contains('A simple class with documentation.'));
     });
 
     test('contains constructors section', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, contains('## Constructors'));
       expect(content, contains('### MyClass.new('));
     });
 
     test('contains properties section', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, contains('## Properties'));
       expect(content, contains('### name → String'));
     });
 
     test('contains methods section', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, contains('## Methods'));
       expect(content, contains('### greet() → String'));
     });
 
     test('embeds small method source inline', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       // greet() is small enough to be inline
       expect(content, contains("return 'Hello, \$name!';"));
     });
 
     test('links large method to detail page', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(
         content,
         contains('[full implementation](MyClass-processData.md)'),
@@ -267,16 +215,16 @@ void main() {
     });
 
     test('links large named constructor to detail page', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, contains('[full implementation](MyClass-fromMap.md)'));
     });
 
     test('does not include inherited Object members', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       // Should NOT have hashCode, runtimeType, noSuchMethod, operator ==
       expect(content, isNot(contains('### hashCode')));
       expect(content, isNot(contains('### runtimeType')));
@@ -284,9 +232,9 @@ void main() {
     });
 
     test('source code has no HTML entities', () {
-      var content = File(
-        p.join(outputDir.path, 'basic_library', 'MyClass', 'MyClass.md'),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass.md')!
+          .renderContent();
       expect(content, isNot(contains('&#39;')));
       expect(content, isNot(contains('&amp;')));
       expect(content, isNot(contains('&lt;')));
@@ -296,38 +244,23 @@ void main() {
 
   group('detail page content', () {
     test('contains parent.member title', () {
-      var content = File(
-        p.join(
-          outputDir.path,
-          'basic_library',
-          'MyClass',
-          'MyClass-processData.md',
-        ),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass-processData.md')!
+          .renderContent();
       expect(content, contains('# MyClass.processData'));
     });
 
     test('contains signature', () {
-      var content = File(
-        p.join(
-          outputDir.path,
-          'basic_library',
-          'MyClass',
-          'MyClass-processData.md',
-        ),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass-processData.md')!
+          .renderContent();
       expect(content, contains('processData(String input) → String'));
     });
 
     test('contains full source code', () {
-      var content = File(
-        p.join(
-          outputDir.path,
-          'basic_library',
-          'MyClass',
-          'MyClass-processData.md',
-        ),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass-processData.md')!
+          .renderContent();
       expect(content, contains('## Source'));
       expect(content, contains('result = result.toLowerCase()'));
     });
@@ -335,42 +268,30 @@ void main() {
 
   group('constructor detail page content', () {
     test('contains parent.member title', () {
-      var content = File(
-        p.join(
-          outputDir.path,
-          'basic_library',
-          'MyClass',
-          'MyClass-fromMap.md',
-        ),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass-fromMap.md')!
+          .renderContent();
       expect(content, contains('# MyClass.fromMap'));
     });
 
     test('contains full source code', () {
-      var content = File(
-        p.join(
-          outputDir.path,
-          'basic_library',
-          'MyClass',
-          'MyClass-fromMap.md',
-        ),
-      ).readAsStringSync();
+      var content = docTree
+          .findFile('basic_library/MyClass/MyClass-fromMap.md')!
+          .renderContent();
       expect(content, contains('## Source'));
       expect(content, contains("throw ArgumentError('name is required')"));
     });
   });
 
   group('edge_cases library index', () {
-    late Directory edgeCasesOutputDir;
+    late DocDir edgeCasesTree;
 
     setUpAll(() async {
-      edgeCasesOutputDir = await renderFixture('edge_cases');
+      edgeCasesTree = await renderFixture('edge_cases');
     });
 
     test('lists typedefs inline', () {
-      var content = File(
-        p.join(edgeCasesOutputDir.path, 'INDEX.md'),
-      ).readAsStringSync();
+      var content = edgeCasesTree.findFile('INDEX.md')!.renderContent();
       expect(
         content,
         contains(
@@ -379,26 +300,22 @@ void main() {
       );
     });
 
-    test('excludes hashCode, operator ==, and toString even when explicitly declared', () {
-      var content = File(
-        p.join(
-          edgeCasesOutputDir.path,
-          'edge_cases',
-          'Comparable2',
-          'Comparable2.md',
-        ),
-      ).readAsStringSync();
-      expect(content, isNot(contains('hashCode')));
-      expect(content, isNot(contains('operator ==')));
-      expect(content, isNot(contains('toString')));
-      // But other operators should still be present
-      expect(content, contains('operator +'));
-    });
+    test(
+      'excludes hashCode, operator ==, and toString even when explicitly declared',
+      () {
+        var content = edgeCasesTree
+            .findFile('edge_cases/Comparable2/Comparable2.md')!
+            .renderContent();
+        expect(content, isNot(contains('hashCode')));
+        expect(content, isNot(contains('operator ==')));
+        expect(content, isNot(contains('toString')));
+        // But other operators should still be present
+        expect(content, contains('operator +'));
+      },
+    );
 
     test('"See" reference for typedefs includes "for more details."', () {
-      var content = File(
-        p.join(edgeCasesOutputDir.path, 'INDEX.md'),
-      ).readAsStringSync();
+      var content = edgeCasesTree.findFile('INDEX.md')!.renderContent();
       expect(
         content,
         contains(

@@ -1,34 +1,26 @@
-import 'dart:io';
-
-import 'package:path/path.dart' as p;
+import 'package:dartdoc_txt/dartdoc_txt.dart';
 import 'package:test/test.dart';
 
 import '../test_helper.dart';
 
 void main() {
-  late Directory outputDir;
+  late DocDir docTree;
   late String indexContent;
 
   setUpAll(() async {
-    outputDir = await renderFixture('multi_library');
-    indexContent = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+    docTree = await renderFixture('multi_library');
+    indexContent = docTree.findFile('INDEX.md')!.renderContent();
   });
 
   group('multi-library INDEX.md structure', () {
     test('creates separate directories for each library', () {
-      expect(Directory(p.join(outputDir.path, 'alpha')).existsSync(), isTrue);
-      expect(Directory(p.join(outputDir.path, 'beta')).existsSync(), isTrue);
+      expect(docTree.findDir('alpha'), isNotNull);
+      expect(docTree.findDir('beta'), isNotNull);
     });
 
     test('does not create per-library INDEX.md in either directory', () {
-      expect(
-        File(p.join(outputDir.path, 'alpha', 'INDEX.md')).existsSync(),
-        isFalse,
-      );
-      expect(
-        File(p.join(outputDir.path, 'beta', 'INDEX.md')).existsSync(),
-        isFalse,
-      );
+      expect(docTree.findFile('alpha/INDEX.md'), isNull);
+      expect(docTree.findFile('beta/INDEX.md'), isNull);
     });
 
     test('INDEX.md contains alpha library heading', () {

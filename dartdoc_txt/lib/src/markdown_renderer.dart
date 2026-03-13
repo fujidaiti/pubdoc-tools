@@ -1,16 +1,13 @@
-import 'dart:io';
-
 import 'package:dartdoc/src/model/model.dart';
-import 'package:path/path.dart' as p;
 
+import 'doc_tree.dart';
 import 'element_renderers.dart';
 import 'template_loader.dart';
 import 'utilities.dart';
 
-/// Walks a [PackageGraph] and generates Markdown documentation files.
+/// Walks a [PackageGraph] and builds a lazy [DocDir] tree.
 class MarkdownRenderer {
   final PackageGraph packageGraph;
-  final String outputDir;
   final int sourceLineThreshold;
   final bool includeSource;
 
@@ -18,7 +15,6 @@ class MarkdownRenderer {
 
   MarkdownRenderer({
     required this.packageGraph,
-    required this.outputDir,
     this.sourceLineThreshold = 10,
     this.includeSource = true,
   }) {
@@ -28,48 +24,38 @@ class MarkdownRenderer {
     );
   }
 
-  Future<void> render() async {
+  DocDir render() {
     var templates = Templates.load();
     var package = packageGraph.defaultPackage;
+    var libraries = _documentedLibraries(package);
+    var root = DocDir('');
 
-    _renderReadme(package);
-    _renderIndex(package, templates);
-
-    for (var lib in _documentedLibraries(package)) {
-      _renderLibrary(lib, templates);
+    // README
+    var doc = package.documentation;
+    if (doc != null && doc.isNotEmpty) {
+      root.children.add(ReadmePage(doc));
     }
 
-    _renderCategories(package, templates);
-  }
+    // INDEX
+    root.children.add(
+      IndexPage(package, libraries, templates, _librarySectionData),
+    );
 
-  void _renderReadme(Package package) {
-    var doc = package.documentation;
-    if (doc == null || doc.isEmpty) return;
+    // Libraries
+    for (var lib in libraries) {
+      root.children.add(_buildLibraryDir(lib, templates));
+    }
 
-    _writeFile('README.md', stripResidualHtml(doc));
-  }
+    // Categories
+    if (package.hasDocumentedCategories) {
+      var topicsDir = DocDir('topics');
+      for (var cat in package.documentedCategoriesSorted) {
+        topicsDir.children.add(CategoryPage(cat, templates));
+      }
+      root.children.add(topicsDir);
+    }
 
-  void _renderIndex(Package package, Templates templates) {
-    var libraries = _documentedLibraries(package);
-
-    var data = {
-      'packageName': package.name,
-      'version': package.version,
-      'hasCategories': package.hasDocumentedCategories,
-      'categories': package.hasDocumentedCategories
-          ? package.documentedCategoriesSorted.map((category) {
-              var summary = extractSummary(category.documentation);
-              var desc = summary.isNotEmpty ? ' — $summary' : '';
-              return {
-                'line':
-                    '- [${category.name}](topics/${_topicFileName(category)})$desc',
-              };
-            }).toList()
-          : <Map<String, dynamic>>[],
-      'libraries': libraries.map((lib) => _librarySectionData(lib)).toList(),
-    };
-
-    _writeFile('INDEX.md', templates['index'].renderString(data));
+    return root;
   }
 
   Map<String, dynamic> _librarySectionData(Library library) {
@@ -119,8 +105,7 @@ class MarkdownRenderer {
     var publicFunctions = library.functions.where((f) => f.isPublic).toList();
 
     // Properties and constants
-    var publicProperties =
-        library.properties.where((p) => p.isPublic).toList();
+    var publicProperties = library.properties.where((p) => p.isPublic).toList();
     var publicConstants = library.constants.where((c) => c.isPublic).toList();
 
     // Typedefs
@@ -184,175 +169,140 @@ class MarkdownRenderer {
     });
   }
 
-  void _renderLibrary(Library library, Templates templates) {
-    var libDir = library.displayName;
+  DocDir _buildLibraryDir(Library library, Templates templates) {
+    var libDir = DocDir(library.displayName);
 
-    // Render container files
+    // Containers (classes, enums, mixins, extensions, extension types)
     for (var cls in library.classes.where((c) => c.isPublic)) {
-      _renderContainerFile(cls, libDir, templates);
+      libDir.children.add(_buildContainerDir(cls, templates));
     }
     for (var e in library.enums.where((e) => e.isPublic)) {
-      _renderContainerFile(e, libDir, templates);
+      libDir.children.add(_buildContainerDir(e, templates));
     }
     for (var m in library.mixins.where((m) => m.isPublic)) {
-      _renderContainerFile(m, libDir, templates);
+      libDir.children.add(_buildContainerDir(m, templates));
     }
     for (var ext in library.extensions.where((e) => e.isPublic)) {
-      _renderContainerFile(ext, libDir, templates);
+      libDir.children.add(_buildContainerDir(ext, templates));
     }
     for (var et in library.extensionTypes.where((e) => e.isPublic)) {
-      _renderContainerFile(et, libDir, templates);
+      libDir.children.add(_buildContainerDir(et, templates));
     }
 
     // Top-level functions
-    var functionsContent =
-        renderTopLevelFunctions(library, _options, templates);
-    if (functionsContent.isNotEmpty) {
-      _writeFile(
-        p.join(libDir, 'top-level-functions', 'top-level-functions.md'),
-        functionsContent,
-      );
-      _renderDetailPagesForFunctions(library, libDir, templates);
+    var functions = library.functions.where((f) => f.isPublic);
+    if (functions.isNotEmpty) {
+      var funcDir = DocDir('top-level-functions');
+      funcDir.children.add(TopLevelFunctionsPage(library, _options, templates));
+      for (var func in functions) {
+        if (needsDetailPage(func, _options)) {
+          funcDir.children.add(
+            DetailPage(
+              '${func.name}.md',
+              func,
+              library.name,
+              _options,
+              templates,
+            ),
+          );
+        }
+      }
+      libDir.children.add(funcDir);
     }
 
     // Top-level properties
-    var propertiesContent = renderTopLevelProperties(library, templates);
-    if (propertiesContent.isNotEmpty) {
-      _writeFile(
-        p.join(libDir, 'top-level-properties', 'top-level-properties.md'),
-        propertiesContent,
-      );
+    var properties = library.properties.where((p) => p.isPublic);
+    var constants = library.constants.where((c) => c.isPublic);
+    if (properties.isNotEmpty || constants.isNotEmpty) {
+      var propDir = DocDir('top-level-properties');
+      propDir.children.add(TopLevelPropertiesPage(library, templates));
+      libDir.children.add(propDir);
     }
 
     // Typedefs
-    var typedefsContent = renderTypedefs(library, templates);
-    if (typedefsContent.isNotEmpty) {
-      _writeFile(p.join(libDir, 'typedefs', 'typedefs.md'), typedefsContent);
+    var typedefs = library.typedefs.where((t) => t.isPublic);
+    if (typedefs.isNotEmpty) {
+      var tdDir = DocDir('typedefs');
+      tdDir.children.add(TypedefsPage(library, templates));
+      libDir.children.add(tdDir);
     }
+
+    return libDir;
   }
 
-  void _renderContainerFile(
-    Container container,
-    String libDir,
-    Templates templates,
-  ) {
-    var content = renderContainer(container, _options, templates);
-    _writeFile(
-      p.join(libDir, container.name, '${container.name}.md'),
-      content,
-    );
+  DocDir _buildContainerDir(Container container, Templates templates) {
+    var containerDir = DocDir(container.name);
+    containerDir.children.add(ContainerPage(container, _options, templates));
 
-    // Create detail pages for members with large source
-    _renderDetailPagesForContainer(container, libDir, templates);
-  }
-
-  void _renderDetailPagesForContainer(
-    Container container,
-    String libDir,
-    Templates templates,
-  ) {
-    var detailDir = p.join(libDir, container.name);
-
-    // Constructors
+    // Detail pages for constructors
     if (container is Constructable) {
       for (var ctor in container.publicConstructorsSorted) {
         if (needsDetailPage(ctor, _options)) {
-          var content =
-              renderDetailPage(ctor, container.name, _options, templates);
-          _writeFile(
-            p.join(
-              detailDir,
+          containerDir.children.add(
+            DetailPage(
               '${container.name}-${ctorBaseName(ctor.name, container.name)}.md',
+              ctor,
+              container.name,
+              _options,
+              templates,
             ),
-            content,
           );
         }
       }
     }
 
-    // Methods (declared only)
+    // Detail pages for methods (declared only)
     for (var method in container.declaredMethods.whereType<Method>().where(
       (m) => !m.isOperator && m.isPublic,
     )) {
       if (needsDetailPage(method, _options)) {
-        var content =
-            renderDetailPage(method, container.name, _options, templates);
-        _writeFile(
-          p.join(
-            detailDir,
+        containerDir.children.add(
+          DetailPage(
             '${container.name}-${safeFileName(method.name)}.md',
+            method,
+            container.name,
+            _options,
+            templates,
           ),
-          content,
         );
       }
     }
     for (var method in container.staticMethods.where((m) => m.isPublic)) {
       if (needsDetailPage(method, _options)) {
-        var content =
-            renderDetailPage(method, container.name, _options, templates);
-        _writeFile(
-          p.join(
-            detailDir,
+        containerDir.children.add(
+          DetailPage(
             '${container.name}-${safeFileName(method.name)}.md',
+            method,
+            container.name,
+            _options,
+            templates,
           ),
-          content,
         );
       }
     }
 
-    // Operators (declared only)
+    // Detail pages for operators (declared only)
     for (var op in container.declaredOperators.where((o) => o.isPublic)) {
       if (needsDetailPage(op, _options)) {
         var safeName = safeFileName('operator ${op.element.name}');
-        var content =
-            renderDetailPage(op, container.name, _options, templates);
-        _writeFile(
-          p.join(detailDir, '${container.name}-$safeName.md'),
-          content,
+        containerDir.children.add(
+          DetailPage(
+            '${container.name}-$safeName.md',
+            op,
+            container.name,
+            _options,
+            templates,
+          ),
         );
       }
     }
-  }
 
-  void _renderDetailPagesForFunctions(
-    Library library,
-    String libDir,
-    Templates templates,
-  ) {
-    var detailDir = p.join(libDir, 'top-level-functions');
-    for (var func in library.functions.where((f) => f.isPublic)) {
-      if (needsDetailPage(func, _options)) {
-        var content =
-            renderDetailPage(func, library.name, _options, templates);
-        _writeFile(p.join(detailDir, '${func.name}.md'), content);
-      }
-    }
-  }
-
-  void _renderCategories(Package package, Templates templates) {
-    if (!package.hasDocumentedCategories) return;
-
-    for (var category in package.documentedCategoriesSorted) {
-      var content = renderCategory(category, templates);
-      _writeFile(p.join('topics', _topicFileName(category)), content);
-    }
-  }
-
-  String _topicFileName(Category category) {
-    final docFile = category.documentationFile;
-    if (docFile != null) return p.basename(docFile.path);
-    return '${category.name.replaceAll(RegExp(r'\s+'), '_')}.md';
+    return containerDir;
   }
 
   List<Library> _documentedLibraries(Package package) {
     return package.publicLibrariesSorted
         .where((lib) => !lib.displayName.startsWith('src/'))
         .toList();
-  }
-
-  void _writeFile(String relativePath, String content) {
-    var file = File(p.join(outputDir, relativePath));
-    file.parent.createSync(recursive: true);
-    file.writeAsStringSync(content);
   }
 }

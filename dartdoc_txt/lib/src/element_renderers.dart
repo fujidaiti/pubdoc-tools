@@ -1,5 +1,7 @@
 import 'package:dartdoc/src/model/model.dart';
+import 'package:path/path.dart' as p;
 
+import 'doc_tree.dart';
 import 'signature_builder.dart';
 import 'template_loader.dart';
 import 'utilities.dart';
@@ -230,8 +232,9 @@ Map<String, dynamic> _containerData(
       .where((m) => m.isPublic)
       .where((m) => m.name != 'toString')
       .toList();
-  var publicStaticMethods =
-      container.staticMethods.where((m) => m.isPublic).toList();
+  var publicStaticMethods = container.staticMethods
+      .where((m) => m.isPublic)
+      .toList();
   var allPublicMethods = [...publicMethods, ...publicStaticMethods];
   var methods = allPublicMethods
       .map((m) => _methodData(m, container.name, options))
@@ -316,14 +319,13 @@ Map<String, dynamic> _methodData(
 ) {
   var annotations = renderAnnotations(method);
   var doc = _cleanDoc(method.documentation);
-  var sourceData =
-      (options.includeSource && !method.element.isAbstract)
-          ? _sourceData(
-              method,
-              '$containerName-${safeFileName(method.name)}',
-              options,
-            )
-          : _noSourceData();
+  var sourceData = (options.includeSource && !method.element.isAbstract)
+      ? _sourceData(
+          method,
+          '$containerName-${safeFileName(method.name)}',
+          options,
+        )
+      : _noSourceData();
 
   return {
     'signature': renderSignature(method),
@@ -344,10 +346,9 @@ Map<String, dynamic> _operatorData(
 ) {
   var doc = _cleanDoc(op.documentation);
   var safeName = safeFileName('operator ${op.element.name}');
-  var sourceData =
-      (options.includeSource && !op.element.isAbstract)
-          ? _sourceData(op, '$containerName-$safeName', options)
-          : _noSourceData();
+  var sourceData = (options.includeSource && !op.element.isAbstract)
+      ? _sourceData(op, '$containerName-$safeName', options)
+      : _noSourceData();
 
   return {
     'signature': renderSignature(op),
@@ -383,10 +384,7 @@ Map<String, dynamic> _sourceData(
 }
 
 Map<String, dynamic> _noSourceData() {
-  return {
-    'hasInlineSource': false,
-    'hasDetailLink': false,
-  };
+  return {'hasInlineSource': false, 'hasDetailLink': false};
 }
 
 /// Returns true if a detail page is needed for this element.
@@ -422,4 +420,141 @@ void _addCategorySection(
       }
     }).toList(),
   });
+}
+
+// ---------------------------------------------------------------------------
+// DocFile subclasses — self-rendering document nodes
+// ---------------------------------------------------------------------------
+
+/// Computes the file name for a category/topic page.
+String topicFileName(Category category) {
+  final docFile = category.documentationFile;
+  if (docFile != null) return p.basename(docFile.path);
+  return '${category.name.replaceAll(RegExp(r'\s+'), '_')}.md';
+}
+
+/// README page — strips HTML from package docs.
+class ReadmePage extends DocFile {
+  final String documentation;
+  ReadmePage(this.documentation) : super('README.md');
+
+  @override
+  String renderContent() => stripResidualHtml(documentation);
+}
+
+/// Package-level INDEX.md.
+class IndexPage extends DocFile {
+  final Package package;
+  final List<Library> libraries;
+  final Templates templates;
+  final Map<String, dynamic> Function(Library) librarySectionData;
+
+  IndexPage(
+    this.package,
+    this.libraries,
+    this.templates,
+    this.librarySectionData,
+  ) : super('INDEX.md');
+
+  @override
+  String renderContent() {
+    var data = {
+      'packageName': package.name,
+      'version': package.version,
+      'hasCategories': package.hasDocumentedCategories,
+      'categories': package.hasDocumentedCategories
+          ? package.documentedCategoriesSorted.map((category) {
+              var summary = extractSummary(category.documentation);
+              var desc = summary.isNotEmpty ? ' — $summary' : '';
+              return {
+                'line':
+                    '- [${category.name}](topics/${topicFileName(category)})$desc',
+              };
+            }).toList()
+          : <Map<String, dynamic>>[],
+      'libraries': libraries.map((lib) => librarySectionData(lib)).toList(),
+    };
+    return templates['index'].renderString(data);
+  }
+}
+
+/// Container page (class, enum, mixin, extension, extension type).
+class ContainerPage extends DocFile {
+  final Container container;
+  final RenderOptions options;
+  final Templates templates;
+
+  ContainerPage(this.container, this.options, this.templates)
+    : super('${container.name}.md');
+
+  @override
+  String renderContent() => renderContainer(container, options, templates);
+}
+
+/// Detail page for members with large source.
+class DetailPage extends DocFile {
+  final ModelElement element;
+  final String parentName;
+  final RenderOptions options;
+  final Templates templates;
+
+  DetailPage(
+    String fileName,
+    this.element,
+    this.parentName,
+    this.options,
+    this.templates,
+  ) : super(fileName);
+
+  @override
+  String renderContent() =>
+      renderDetailPage(element, parentName, options, templates);
+}
+
+/// Top-level functions page.
+class TopLevelFunctionsPage extends DocFile {
+  final Library library;
+  final RenderOptions options;
+  final Templates templates;
+
+  TopLevelFunctionsPage(this.library, this.options, this.templates)
+    : super('top-level-functions.md');
+
+  @override
+  String renderContent() =>
+      renderTopLevelFunctions(library, options, templates);
+}
+
+/// Top-level properties page.
+class TopLevelPropertiesPage extends DocFile {
+  final Library library;
+  final Templates templates;
+
+  TopLevelPropertiesPage(this.library, this.templates)
+    : super('top-level-properties.md');
+
+  @override
+  String renderContent() => renderTopLevelProperties(library, templates);
+}
+
+/// Typedefs page.
+class TypedefsPage extends DocFile {
+  final Library library;
+  final Templates templates;
+
+  TypedefsPage(this.library, this.templates) : super('typedefs.md');
+
+  @override
+  String renderContent() => renderTypedefs(library, templates);
+}
+
+/// Category/topic page.
+class CategoryPage extends DocFile {
+  final Category category;
+  final Templates templates;
+
+  CategoryPage(this.category, this.templates) : super(topicFileName(category));
+
+  @override
+  String renderContent() => renderCategory(category, templates);
 }

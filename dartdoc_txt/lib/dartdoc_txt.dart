@@ -1,3 +1,4 @@
+export 'src/doc_tree.dart';
 export 'src/element_renderers.dart';
 export 'src/markdown_renderer.dart';
 export 'src/signature_builder.dart';

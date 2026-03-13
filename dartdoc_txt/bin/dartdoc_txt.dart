@@ -2,24 +2,14 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:dartdoc/dartdoc.dart';
-import 'package:dartdoc_txt/src/markdown_renderer.dart';
+import 'package:dartdoc_txt/dartdoc_txt.dart';
 
 const String version = '0.0.1';
 
 Future<void> main(List<String> arguments) async {
   final argParser = ArgParser()
-    ..addOption(
-      'input',
-      abbr: 'i',
-      help: 'Input directory.',
-      mandatory: true,
-    )
-    ..addOption(
-      'output',
-      abbr: 'o',
-      help: 'Output directory.',
-      mandatory: true,
-    )
+    ..addOption('input', abbr: 'i', help: 'Input directory.', mandatory: true)
+    ..addOption('output', abbr: 'o', help: 'Output directory.', mandatory: true)
     ..addOption(
       'source-threshold',
       help: 'Max lines of source to embed inline (default: 10).',
@@ -93,11 +83,11 @@ Future<void> main(List<String> arguments) async {
   print('Generating Markdown documentation...');
   final renderer = MarkdownRenderer(
     packageGraph: packageGraph,
-    outputDir: outputDir,
     sourceLineThreshold: sourceThreshold,
     includeSource: includeSource,
   );
-  await renderer.render();
+  final docTree = renderer.render();
+  writeDocTree(docTree, outputDir);
 
   print('Documentation written to $outputDir');
 }

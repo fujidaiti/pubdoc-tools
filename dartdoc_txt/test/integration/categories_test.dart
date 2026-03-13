@@ -1,52 +1,42 @@
-import 'dart:io';
-
-import 'package:path/path.dart' as p;
+import 'package:dartdoc_txt/dartdoc_txt.dart';
 import 'package:test/test.dart';
 
 import '../test_helper.dart';
 
 void main() {
-  late Directory outputDir;
+  late DocDir docTree;
 
   setUpAll(() async {
-    outputDir = await renderFixture('categories');
+    docTree = await renderFixture('categories');
   });
 
   group('topics directory structure', () {
     test('creates topics/ directory', () {
-      expect(Directory(p.join(outputDir.path, 'topics')).existsSync(), isTrue);
+      expect(docTree.findDir('topics'), isNotNull);
     });
 
     test('creates getting-started.md from doc/ subdirectory', () {
-      expect(
-        File(
-          p.join(outputDir.path, 'topics', 'getting-started.md'),
-        ).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findFile('topics/getting-started.md'), isNotNull);
     });
 
     test('creates utilities.md', () {
-      expect(
-        File(p.join(outputDir.path, 'topics', 'utilities.md')).existsSync(),
-        isTrue,
-      );
+      expect(docTree.findFile('topics/utilities.md'), isNotNull);
     });
   });
 
   group('package index topics section', () {
     test('contains Topics heading', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('## Topics'));
     });
 
     test('links to Getting Started topic file', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('[Getting Started](topics/getting-started.md)'));
     });
 
     test('links to Utilities topic file', () {
-      var content = File(p.join(outputDir.path, 'INDEX.md')).readAsStringSync();
+      var content = docTree.findFile('INDEX.md')!.renderContent();
       expect(content, contains('[Utilities](topics/utilities.md)'));
     });
   });
@@ -55,9 +45,7 @@ void main() {
     late String content;
 
     setUp(() {
-      content = File(
-        p.join(outputDir.path, 'topics', 'getting-started.md'),
-      ).readAsStringSync();
+      content = docTree.findFile('topics/getting-started.md')!.renderContent();
     });
 
     test('contains documentation text', () {
@@ -91,9 +79,7 @@ void main() {
     late String content;
 
     setUp(() {
-      content = File(
-        p.join(outputDir.path, 'topics', 'utilities.md'),
-      ).readAsStringSync();
+      content = docTree.findFile('topics/utilities.md')!.renderContent();
     });
 
     test('contains documentation text', () {

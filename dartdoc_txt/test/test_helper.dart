@@ -4,7 +4,7 @@ import 'package:dartdoc/dartdoc.dart';
 import 'package:dartdoc/src/model/model.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:dartdoc_txt/src/markdown_renderer.dart';
+import 'package:dartdoc_txt/dartdoc_txt.dart';
 
 /// Builds a [PackageGraph] from a test fixture.
 ///
@@ -30,27 +30,17 @@ Future<PackageGraph> buildFixtureGraph(String fixtureName) async {
 }
 
 /// Builds a [PackageGraph] and runs the [MarkdownRenderer], returning the
-/// output directory.
-Future<Directory> renderFixture(
+/// document tree.
+Future<DocDir> renderFixture(
   String fixtureName, {
   int sourceThreshold = 10,
   bool includeSource = true,
 }) async {
   var packageGraph = await buildFixtureGraph(fixtureName);
-
-  var outputDir = Directory(
-    p.join(Directory.current.path, 'tmp', 'test_output_$fixtureName'),
-  );
-  if (outputDir.existsSync()) {
-    outputDir.deleteSync(recursive: true);
-  }
-
   var renderer = MarkdownRenderer(
     packageGraph: packageGraph,
-    outputDir: outputDir.path,
     sourceLineThreshold: sourceThreshold,
     includeSource: includeSource,
   );
-  await renderer.render();
-  return outputDir;
+  return renderer.render();
 }
