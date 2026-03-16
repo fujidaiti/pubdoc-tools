@@ -9,7 +9,8 @@ absolute path to the project root.
 pubdoc --version
 ```
 
-If not found, follow `skill/references/installation.md` before continuing.
+If not found, follow `skill/references/installation.md` for install
+instructions.
 
 ## 2. Run `pubdoc get`
 
