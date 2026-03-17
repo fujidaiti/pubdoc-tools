@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:file/memory.dart';
 import 'package:pub_semver/pub_semver.dart';
 import 'package:pubdoc/src/exceptions.dart';
 import 'package:pubdoc/src/project.dart';
@@ -20,7 +19,8 @@ void main() {
       projectRoot: _projectRoot,
       pubCacheBase: _pubCacheBase,
     );
-    project = ProjectContext(_projectRoot, env: env);
+    env.setUp();
+    project = ProjectContext.from(_projectRoot, env: env);
   });
 
   group('getPackageVersion', () {
