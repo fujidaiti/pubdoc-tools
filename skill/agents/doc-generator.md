@@ -17,17 +17,38 @@ instructions.
 From the project root:
 
 ```
-pubdoc get <package-name1> <package-name2> ...
+pubdoc get --json=0 <package-name1> <package-name2> ...
 ```
 
 This resolves each package to the version pinned in `pubspec.lock`, generates
-structured text documentation if not cached, and creates symlinks:
+structured text documentation if not cached, and creates symlinks under
+`<project-root>/.pubdoc/`.
 
+The `--json=0` flag produces minified JSON output. Read the JSON and extract the
+per-package fields — you will need `source` and `cache` in the following steps.
+
+```json
+{
+  "output": {
+    "packages": {
+      "dio": {
+        "documentation": "/path/to/project/.pubdoc/dio",
+        "version": "5.3.x",
+        "source": "/Users/you/.pub-cache/hosted/pub.dev/dio-5.3.6",
+        "cache": "hit"
+      }
+    }
+  },
+  "errors": [],
+  "logs": []
+}
 ```
-<project-root>/.pubdoc/
-  ├── firebase_core  →  ~/.pubdoc/cache/firebase_core/firebase_core-4.5.4/
-  └── dio            →  ~/.pubdoc/cache/dio/dio-5.2.x/
-```
+
+- `source` — local filesystem path to the package source directory.
+- `cache` — one of `hit` (reused existing cache), `miss` (generated fresh), or
+  `refreshed` (cache was incompatible and was regenerated).
+
+If the `errors` array is non-empty, report the errors to the user and stop.
 
 > **Pre-requirement:** `dart pub get` must have been run at least once so that
 > `pubspec.lock` and `.dart_tool/package_config.json` exist. If `pubdoc get`
@@ -40,32 +61,21 @@ pubdoc does not include a package's `example/` directory. Adding it (plus a
 plain-English overview) makes docs much more useful for understanding practical
 usage patterns. Do this for each package:
 
-### a. Find the source path
+### a. Check whether examples need updating
 
-Read `.pubdoc/<package>/metadata.json`:
+Use the `source` and `cache` fields from the step-2 JSON output.
 
-```json
-{
-  "version": "4.5.x",
-  "package_version": "4.5.4",
-  "source": "file:///Users/username/.pub-cache/hosted/pub.dev/firebase_core-4.5.4"
-}
-```
-
-Strip the `file://` prefix from `source` to get the local filesystem path.
+- If `cache` is `hit` **and** `.pubdoc/<package>/EXAMPLES.md` already exists,
+  examples are current — skip to the next package.
+- Otherwise (cache is `miss` or `refreshed`, or `EXAMPLES.md` is missing),
+  proceed to generate.
 
 ### b. Check whether `example/` exists in the source
 
 Look for `<source-path>/example/`. If absent, skip this package — not all
 packages ship examples.
 
-### c. Check whether examples are already up-to-date
-
-Read `.pubdoc/<package>/.examples_package_version` if it exists. If its content
-matches `package_version` in `metadata.json`, examples are current — skip to the
-next package.
-
-### d. Copy examples into the documentation
+### c. Copy examples into the documentation
 
 ```
 cp -r <source-path>/example/ .pubdoc/<package>/example/
@@ -74,9 +84,9 @@ cp -r <source-path>/example/ .pubdoc/<package>/example/
 The symlink at `.pubdoc/<package>` points to the real cache directory, so this
 write lands in the shared cache and is reused across projects.
 
-### e. Write EXAMPLES.md
+### d. Write EXAMPLES.md
 
-Read every `.dart` file inside the copied `example/` directory and write
+Explore the copied `example/` directory and write
 `.pubdoc/<package>/EXAMPLES.md` with this structure:
 
 1. **Table of Contents** at the top — one line per example file, linked to its
@@ -94,12 +104,6 @@ Goal: an agent skimming EXAMPLES.md should be able to identify the most relevant
 example and extract enough to write correct code, without opening the raw
 `.dart` files.
 
-### f. Record the package version
-
-Write `package_version` (just the version string) to
-`.pubdoc/<package>/.examples_package_version` so future runs can skip
-regeneration when nothing has changed.
-
 ## 4. Generate OVERVIEW.md
 
 OVERVIEW.md is the single entry point to the documentation. It should give an
@@ -108,15 +112,18 @@ it, and where to find specific details.
 
 Do this for each package:
 
-### a. Check whether OVERVIEW.md is up-to-date
+### a. Check whether OVERVIEW.md needs updating
 
-Read `.pubdoc/<package>/.overview_package_version` if it exists. If its content
-matches `package_version` in `metadata.json`, OVERVIEW.md is current — skip to
-the next package.
+Use the `cache` field from the step-2 JSON output.
+
+- If `cache` is `hit` **and** `.pubdoc/<package>/OVERVIEW.md` already exists, it
+  is current — skip to the next package.
+- Otherwise (cache is `miss` or `refreshed`, or `OVERVIEW.md` is missing),
+  proceed to generate.
 
 ### b. Gather source material
 
-From `metadata.json`, take the local `source` path (strip the `file://` prefix).
+Use the `source` path from the step-2 JSON output.
 
 - **README:** read `<source-path>/README.md`. If absent, skip the summary
   section and proceed to the documentation guide below.
@@ -213,11 +220,6 @@ Key files:
 - [`topics/MigrationGuide.md`](topics/MigrationGuide.md) — migrating from v1 to
   v2
 ```
-
-### d. Record the package version
-
-Write `package_version` to `.pubdoc/<package>/.overview_package_version` so
-future runs skip regeneration when nothing has changed.
 
 ## 5. Report back
 
