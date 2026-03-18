@@ -1,4 +1,4 @@
-# Subagent instructions: pubdoc
+# Subagent instructions: documentation generation
 
 Follow these steps in order. You have been given a list of package names and the
 absolute path to the project root.

@@ -1,4 +1,4 @@
-# Subagent instructions: doc exploration
+# Subagent instructions: documentation exploration
 
 You have been given a query, a list of package names, and the absolute path to
 the project root. Your job is to explore the generated documentation and return
