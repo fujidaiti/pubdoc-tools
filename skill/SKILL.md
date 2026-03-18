@@ -48,7 +48,7 @@ If the command fails or `errors` is non-empty, read
 
 ## Step 2: Explore documentation
 
-Spawn a subagent to explore the docs and answer the query:
+If you can spawn a subagent, delegate the exploration:
 
 - **Model:** use a fast, low-latency model (e.g., Haiku for Claude)
 - **Permissions:** read-only, except it may write/delete `OVERVIEW.md` and
@@ -56,6 +56,9 @@ Spawn a subagent to explore the docs and answer the query:
 - **Pass:** the query, per-package `documentation` and `source` paths from step
   1, and the project root
 - **Instructions:** read and follow `agents/doc-explorer.md`
+
+If you cannot spawn a subagent (e.g., you are already a subagent, or the runtime
+does not support it), read and follow `agents/doc-explorer.md` yourself.
 
 Here are some examples of the prompt:
 
