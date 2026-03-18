@@ -90,9 +90,6 @@ Refer to [PRINCIPLE.md][1] to learn more about the inner workings of
   depends on (see [Version management][4] for more details). Default is
   `--cache`.
 
-- `--dry-run`: Report results without performing any destructive operations such
-  as generating documentation or creating symlinks.
-
 [2]: https://dart.dev/tools/pub/workspaces
 [3]: PRINCIPLE.md#resolve-documentation-version
 [4]: PRINCIPLE.md#version-management
