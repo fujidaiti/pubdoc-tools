@@ -1,19 +1,24 @@
 # Subagent instructions: documentation exploration
 
-You have been given a query, a list of package names, and the absolute path to
-the project root. Your job is to explore the generated documentation and return
-findings that answer the query.
+You have been given a query, a list of packages with their documentation and
+source paths, and the project root. Your job is to explore the generated
+documentation and return findings that answer the query.
 
 ## 1. Orient yourself
 
-For each package, start by reading `.pubdoc/<package>/OVERVIEW.md`. This gives
-you:
+For each package, read `.pubdoc/<package>/OVERVIEW.md`. This gives you:
 
 - What the package does and its core concepts
 - A guide to the documentation structure — which libraries, topics, and examples
   are available
 
-## 2. Plan your exploration
+### Troubleshooting—missing OVERVIEW.md
+
+If `.pubdoc/<package>/OVERVIEW.md` does not exist, read and follow
+`references/doc-enrichment.md` to generate OVERVIEW.md and EXAMPLES.md. Then go
+back here and move to step 2.
+
+## 2. Explore and gather findings
 
 Based on the query and what you learned from OVERVIEW.md, decide which
 documentation files to read. Some guidelines:
@@ -29,12 +34,10 @@ documentation files to read. Some guidelines:
 - **Migration / upgrade questions** — check topics/ first, then OVERVIEW.md for
   version-specific notes
 
-Don't read everything — be targeted. Read OVERVIEW.md, identify the most
-relevant files, then read only those.
+Don't read everything — be targeted. Use the reading guide from OVERVIEW.md to
+identify the most relevant files, then read only those.
 
-## 3. Explore and gather findings
-
-Read the documentation files you identified. As you go:
+As you go:
 
 - Extract the specific information that answers the query
 - Note relevant code patterns, method signatures, constructor parameters
@@ -44,7 +47,7 @@ Read the documentation files you identified. As you go:
 If your initial reads don't fully answer the query, follow references to related
 classes or methods — but stay focused on the query.
 
-## 4. Report back
+## 3. Report back
 
 Return a concise, actionable answer structured like this:
 

@@ -14,53 +14,68 @@ description: >
 # pubdoc
 
 Answers questions about Dart/Flutter packages by generating version-accurate
-documentation and exploring it. The workflow has two phases:
+documentation and exploring it.
 
-1. **Generate docs** — a subagent installs the `pubdoc` CLI (if needed), runs it
-   against the project's pinned dependency versions, and enriches the output
-   with examples and an overview.
-2. **Explore docs** — a subagent reads the generated documentation and returns
-   findings relevant to your query.
+## Step 1: Run `pubdoc get`
 
-Both phases run in subagents to keep the main context window clean.
+From the project root, run:
 
-## Phase 1: Generate documentation
+```
+pubdoc get --json=0 <package-name1> <package-name2> ... -p <project-root>
+```
 
-Spawn a subagent to prepare the docs:
+Parse the JSON output and extract per-package `source` and `documentation`:
+
+```json
+{
+  "output": {
+    "packages": {
+      "dio": {
+        "documentation": "/path/to/project/.pubdoc/dio",
+        "version": "5.3.x",
+        "source": "/Users/you/.pub-cache/hosted/pub.dev/dio-5.3.6",
+        "cache": "hit"
+      }
+    }
+  },
+  "errors": [],
+  "logs": []
+}
+```
+
+If the command fails or `errors` is non-empty, read
+`references/troubleshooting.md` and follow its guidance.
+
+## Step 2: Explore documentation
+
+Spawn a subagent to explore the docs and answer the query:
 
 - **Model:** use a fast, low-latency model (e.g., Haiku for Claude)
-- **Pass:** the package name(s) and the absolute path to the project root
-- **Instructions:** read and follow `agents/doc-generator.md`
-
-Wait for it to return the documentation paths before moving on.
-
-> **Skip condition:** If `.pubdoc/<package>/OVERVIEW.md` already exists for
-> every requested package, you can skip this phase — the docs are already
-> generated.
-
-## Phase 2: Explore documentation
-
-Spawn a read-only subagent to explore the docs and answer the query:
-
-- **Model:** use a fast, low-latency model
-- **Permissions:** read-only (no file writes, no shell commands that modify the
-  filesystem)
+- **Permissions:** read-only, except it may write/delete `OVERVIEW.md` and
+  `EXAMPLES.md` (and copy `example/` dirs) under `.pubdoc/<package>/`
+- **Pass:** the query, per-package `documentation` and `source` paths from step
+  1, and the project root
 - **Instructions:** read and follow `agents/doc-explorer.md`
-- **Prompt:** a self-contained description of the task including the doc
-  path(s).
 
 Here are some examples of the prompt:
 
 ```
-Read the documentation at /path/to/project/.pubdoc/app_links/ and explain
-how to set up deep link handling on Android and iOS.
+Read the documentation at /path/to/project/.pubdoc/app_links/
+(source: /Users/you/.pub-cache/hosted/pub.dev/app_links-6.3.3)
+and explain how to set up deep link handling on Android and iOS.
 
-Read the documentation at /path/to/project/.pubdoc/dio/ and describe the
-interceptor API: what parameters it accepts, how to chain multiple
-interceptors, and common patterns.
+Read the documentation at /path/to/project/.pubdoc/dio/
+(source: /Users/you/.pub-cache/hosted/pub.dev/dio-5.3.6)
+and describe the interceptor API: what parameters it accepts, how to chain
+multiple interceptors, and common patterns.
 ```
 
 Wait for the findings, then use them to proceed with your task.
+
+## Troubleshooting
+
+If `pubdoc get` fails or produces unexpected results, read
+`references/troubleshooting.md` for common issues and fixes.
 
 ## Documentation structure
 
