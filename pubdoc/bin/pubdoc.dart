@@ -35,15 +35,23 @@ ArgParser buildParser() {
     )
     ..addCommand(
       'get',
-      ArgParser()..addOption(
-        'project',
-        abbr: 'p',
-        valueHelp: 'path',
-        help:
-            'The path to the Dart/Flutter project root—a directory that '
-            'has pubspec.yaml, including pub workspaces. '
-            'Defaults to the current directory.',
-      ),
+      ArgParser()
+        ..addOption(
+          'project',
+          abbr: 'p',
+          valueHelp: 'path',
+          help:
+              'The path to the Dart/Flutter project root—a directory that '
+              'has pubspec.yaml, including pub workspaces. '
+              'Defaults to the current directory.',
+        )
+        ..addFlag(
+          'cache',
+          defaultsTo: true,
+          help:
+              'Use cache whenever possible. '
+              'Use --no-cache to always regenerate documentation.',
+        ),
     );
 }
 
@@ -116,10 +124,12 @@ Future<void> main(List<String> arguments) async {
         final config = PubdocConfig.resolve(env);
         final projectPath = command.option('project') ?? Directory.current.path;
         final project = ProjectContext.from(projectPath, env: env);
+        final useCache = command.flag('cache');
         final getCommand = GetCommand(
           project: project,
           config: config,
           env: env,
+          useCache: useCache,
         );
         final result = await getCommand.run(packageNames: command.rest);
         if (useJson) {
