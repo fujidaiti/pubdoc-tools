@@ -15,14 +15,6 @@ enum ResolutionStrategy {
 
 extension VersionDocResolution on Version {
   /// Returns the documentation version string for the given strategy.
-  ///
-  /// - `exact`: `"1.2.3"`
-  /// - `loosePatch`: `"1.2.x"`
-  /// - `looseMinor`: `"1.x"`
-  ///
-  /// Pre-release versions (e.g., `1.0.0-dev.1`) always resolve as exact
-  /// regardless of the strategy, since they have no API compatibility
-  /// guarantees.
   String docVersion(ResolutionStrategy strategy) {
     if (isPreRelease) return toString();
     return switch (strategy) {

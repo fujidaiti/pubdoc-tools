@@ -664,7 +664,6 @@ void main() {
       env.pubGet();
       final result = await command.run(packageNames: ['dio']);
 
-      final cacheDir = '$_cacheDir/dio/dio-1.0.0-dev.1';
       expect(
         result,
         _isGetResult(
@@ -678,6 +677,7 @@ void main() {
           },
         ),
       );
+      final cacheDir = '$_cacheDir/dio/dio-1.0.0-dev.1';
       verify(
         generator.generate(
           sourcePath: anyNamed('sourcePath'),
@@ -685,6 +685,14 @@ void main() {
         ),
       );
       verifyNoMoreInteractions(generator);
+      expect(
+        CacheMetadata.read(cacheDir, fs: env.fs),
+        _isCacheMetadata(
+          pkgName: 'dio',
+          version: '1.0.0-dev.1',
+          pkgVersion: '1.0.0-dev.1',
+        ),
+      );
     });
 
     test('looseMinor with pre-release uses exact version', () async {
@@ -714,10 +722,18 @@ void main() {
         ),
       );
       verifyNoMoreInteractions(generator);
+      expect(
+        CacheMetadata.read(cacheDir, fs: env.fs),
+        _isCacheMetadata(
+          pkgName: 'dio',
+          version: '1.0.0-dev.1',
+          pkgVersion: '1.0.0-dev.1',
+        ),
+      );
     });
 
-    test('pre-release and stable are separate', () async {
-      final command = makeCommand(strategy: .loosePatch);
+    test('never share docs with stable versions', () async {
+      final command = makeCommand(strategy: .looseMinor);
 
       // First: pre-release version
       env.pubspec.addDependency('dio', '1.0.0-dev.1');
@@ -729,57 +745,22 @@ void main() {
       env.pubGet();
       await command.run(packageNames: ['dio']);
 
-      verify(
+      verifyInOrder([
         generator.generate(
           sourcePath: anyNamed('sourcePath'),
           outputDir: '$_cacheDir/dio/dio-1.0.0-dev.1',
         ),
-      );
-      verify(
         generator.generate(
           sourcePath: anyNamed('sourcePath'),
-          outputDir: '$_cacheDir/dio/dio-1.0.x',
+          outputDir: '$_cacheDir/dio/dio-1.x',
         ),
-      );
+      ]);
       verifyNoMoreInteractions(generator);
       expect(
         env.fs.directory('$_cacheDir/dio/dio-1.0.0-dev.1').existsSync(),
         isTrue,
       );
-      expect(env.fs.directory('$_cacheDir/dio/dio-1.0.x').existsSync(), isTrue);
-    });
-
-    test('cache reuse for pre-release', () async {
-      final command = makeCommand(strategy: .loosePatch);
-      env.pubspec.addDependency('dio', '1.0.0-dev.1');
-      env.pubGet();
-
-      // First run
-      await command.run(packageNames: ['dio']);
-      verify(
-        generator.generate(
-          sourcePath: anyNamed('sourcePath'),
-          outputDir: '$_cacheDir/dio/dio-1.0.0-dev.1',
-        ),
-      );
-
-      // Second run — should be a cache hit
-      reset(generator);
-      final result = await command.run(packageNames: ['dio']);
-      verifyNoMoreInteractions(generator);
-      expect(
-        result,
-        _isGetResult(
-          packages: {
-            'dio': _isPackageGetResult(
-              documentation: '$_projectRoot/.pubdoc/dio',
-              version: '1.0.0-dev.1',
-              source: '$_pubCacheBase/dio-1.0.0-dev.1/',
-              cacheStatus: CacheStatus.hit,
-            ),
-          },
-        ),
-      );
+      expect(env.fs.directory('$_cacheDir/dio/dio-1.x').existsSync(), isTrue);
     });
   });
 
