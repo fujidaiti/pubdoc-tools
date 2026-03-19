@@ -17,3 +17,17 @@ String exclaim() => '$this!';
 ```
 
 ---
+### firstSegment() → String
+
+Splits this string by `/` and returns the first segment.
+
+```dart
+final path = 'usr/local/bin';
+print(path.firstSegment()); // prints "usr"
+```
+
+```dart
+String firstSegment() => split('/').first;
+```
+
+---
