@@ -36,6 +36,7 @@ Future<void> generateDocs({
     packageGraph: packageGraph,
     sourceLineThreshold: sourceLineThreshold,
     includeSource: includeSource,
+    packageRoot: inputDir,
   );
   final docTree = renderer.render();
   writeDocTree(docTree, outputDir);
