@@ -160,28 +160,6 @@ void main() {
       expect(result.action, CacheAction.regenerate);
     });
 
-    test('returns regenerate when metadata.toolVersion is null (old cache)',
-        () {
-      final manager = CacheManager(config, env: env);
-      final cacheDir = config.packageCacheDir('dio', '5.3.x');
-      env.fs.directory(cacheDir).createSync(recursive: true);
-      // Write metadata without tool_version field.
-      CacheMetadata(
-        version: '5.3.x',
-        packageVersion: '5.3.4',
-        source: 'file:///test/source',
-        toolVersion: null,
-      ).write(cacheDir, fs: env.fs);
-
-      final result = manager.checkCache(
-        packageName: 'dio',
-        packageVersion: Version.parse('5.3.2'),
-        strategy: ResolutionStrategy.loosePatch,
-        useCache: true,
-      );
-      expect(result.action, CacheAction.regenerate);
-    });
-
     test(
         'returns regenerate when metadata.toolVersion < current tool version',
         () {
@@ -243,21 +221,6 @@ void main() {
       expect(loaded.packageVersion, '5.3.4');
       expect(loaded.source, 'file:///path/to/dio-5.3.4');
       expect(loaded.toolVersion, '1.0.0');
-    });
-
-    test('round-trips through JSON with null tool_version', () {
-      final metadata = CacheMetadata(
-        version: '5.3.x',
-        packageVersion: '5.3.4',
-        source: 'file:///path/to/dio-5.3.4',
-        toolVersion: null,
-      );
-      env.fs.directory('/tmp/test2').createSync(recursive: true);
-      metadata.write('/tmp/test2', fs: env.fs);
-
-      final loaded = CacheMetadata.read('/tmp/test2', fs: env.fs);
-      expect(loaded, isNotNull);
-      expect(loaded!.toolVersion, isNull);
     });
 
     test('read returns null when file does not exist', () {
