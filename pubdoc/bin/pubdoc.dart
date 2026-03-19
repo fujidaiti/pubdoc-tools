@@ -9,7 +9,6 @@ import 'package:pubdoc/src/exceptions.dart';
 import 'package:pubdoc/src/get_command.dart' as cmd;
 import 'package:pubdoc/src/logger.dart';
 import 'package:pubdoc/src/project.dart';
-import 'package:pubdoc/src/pubdoc_version.dart';
 import 'package:pubdoc/src/version_resolution.dart';
 
 String _toJson(Object? obj, int indent) => indent == 0
@@ -40,7 +39,7 @@ class _PubdocRunner extends CommandRunner<int> {
   @override
   Future<int?> runCommand(ArgResults topLevelResults) async {
     if (topLevelResults.flag('version')) {
-      print('pubdoc version: $pubdocVersion');
+      print('pubdoc version: ${PlatformEnvironment().toolVersion}');
       return 0;
     }
     final rawJson = topLevelResults['json'] as String?;

@@ -4,7 +4,6 @@ import 'doc_generator.dart';
 import 'environment.dart';
 import 'exceptions.dart';
 import 'project.dart';
-import 'pubdoc_version.dart' as pub;
 import 'version_resolution.dart';
 
 /// Cache status for a single package after `pubdoc get`.
@@ -116,11 +115,7 @@ class GetCommand {
 
     project.validate();
 
-    final cacheManager = CacheManager(
-      config,
-      env: env,
-      pubdocVersion: pub.pubdocVersion,
-    );
+    final cacheManager = CacheManager(config, env: env);
     final generator = _generator ?? DocGenerator(env: env);
 
     final results = <String, PackageGetResult>{};
@@ -183,7 +178,7 @@ class GetCommand {
         version: docVersion,
         packageVersion: version.toString(),
         source: Uri.file(sourceDir.path).toString(),
-        pubdocVersion: pub.pubdocVersion,
+        toolVersion: env.toolVersion,
       ).write(cacheResult.cacheDir, fs: env.fs);
 
       env.logger?.info('  Documentation generated.');
