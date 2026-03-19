@@ -10,10 +10,12 @@ import 'utilities.dart';
 class RenderOptions {
   final int sourceLineThreshold;
   final bool includeSource;
+  final String packageRoot;
 
   const RenderOptions({
     this.sourceLineThreshold = 10,
     this.includeSource = true,
+    required this.packageRoot,
   });
 }
 
@@ -59,6 +61,7 @@ String renderTopLevelFunctions(
         'hasDocumentation': _cleanDoc(func.documentation).isNotEmpty,
         'documentation': _cleanDoc(func.documentation),
         ...sourceData,
+        ..._sourceLocationData(func, options.packageRoot),
       };
     }).toList(),
   };
@@ -67,7 +70,11 @@ String renderTopLevelFunctions(
 }
 
 /// Renders all top-level properties and constants for a library.
-String renderTopLevelProperties(Library library, Templates templates) {
+String renderTopLevelProperties(
+  Library library,
+  RenderOptions options,
+  Templates templates,
+) {
   var properties = library.properties.where((p) => p.isPublic).toList();
   var constants = library.constants.where((c) => c.isPublic).toList();
   if (properties.isEmpty && constants.isEmpty) return '';
@@ -84,6 +91,7 @@ String renderTopLevelProperties(Library library, Templates templates) {
         'constantValue': unescapeHtml(c.constantValueBase),
         'hasDocumentation': doc.isNotEmpty,
         'documentation': doc,
+        ..._sourceLocationData(c, options.packageRoot),
       };
     }).toList(),
     'hasProperties': properties.isNotEmpty,
@@ -94,6 +102,7 @@ String renderTopLevelProperties(Library library, Templates templates) {
         'typeName': plainTypeName(prop.modelType),
         'hasDocumentation': doc.isNotEmpty,
         'documentation': doc,
+        ..._sourceLocationData(prop, options.packageRoot),
       };
     }).toList(),
   };
@@ -102,7 +111,11 @@ String renderTopLevelProperties(Library library, Templates templates) {
 }
 
 /// Renders all typedefs for a library.
-String renderTypedefs(Library library, Templates templates) {
+String renderTypedefs(
+  Library library,
+  RenderOptions options,
+  Templates templates,
+) {
   var typedefs = library.typedefs.where((t) => t.isPublic).toList();
   if (typedefs.isEmpty) return '';
 
@@ -115,6 +128,7 @@ String renderTypedefs(Library library, Templates templates) {
         'sourceCode': _rawSourceCode(td),
         'hasDocumentation': doc.isNotEmpty,
         'documentation': doc,
+        ..._sourceLocationData(td, options.packageRoot),
       };
     }).toList(),
   };
@@ -146,6 +160,7 @@ String renderDetailPage(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     'sourceCode': _rawSourceCode(element),
+    ..._sourceLocationData(element, options.packageRoot),
   };
 
   return templates['detail_page'].renderString(data);
@@ -271,6 +286,7 @@ Map<String, dynamic> _containerData(
     'methods': methods,
     'hasOperators': publicOperators.isNotEmpty,
     'operators': operators,
+    ..._sourceLocationData(container, options.packageRoot),
   };
 }
 
@@ -298,6 +314,7 @@ Map<String, dynamic> _constructorData(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     ...sourceData,
+    ..._sourceLocationData(ctor, options.packageRoot),
   };
 }
 
@@ -341,6 +358,7 @@ Map<String, dynamic> _methodData(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     ...sourceData,
+    ..._sourceLocationData(method, options.packageRoot),
   };
 }
 
@@ -360,7 +378,26 @@ Map<String, dynamic> _operatorData(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     ...sourceData,
+    ..._sourceLocationData(op, options.packageRoot),
   };
+}
+
+/// Computes source location data (relative path + line number range) for an element.
+Map<String, dynamic> _sourceLocationData(
+  ModelElement element,
+  String packageRoot,
+) {
+  final absolutePath = element.sourceFileName;
+  final relativePath = p.relative(absolutePath, from: packageRoot);
+  final startLine = element.characterLocation?.lineNumber;
+  if (startLine == null) {
+    return {'hasSourceLocation': true, 'sourceLocation': relativePath};
+  }
+  final lineCount = sourceLineCount(_rawSourceCode(element));
+  final location = lineCount > 0
+      ? '$relativePath:$startLine:${startLine + lineCount - 1}'
+      : '$relativePath:$startLine';
+  return {'hasSourceLocation': true, 'sourceLocation': location};
 }
 
 /// Computes source display data for an element.
@@ -533,24 +570,28 @@ class TopLevelFunctionsPage extends DocFile {
 /// Top-level properties page.
 class TopLevelPropertiesPage extends DocFile {
   final Library library;
+  final RenderOptions options;
   final Templates templates;
 
-  TopLevelPropertiesPage(this.library, this.templates)
+  TopLevelPropertiesPage(this.library, this.options, this.templates)
     : super('top-level-properties.md');
 
   @override
-  String renderContent() => renderTopLevelProperties(library, templates);
+  String renderContent() =>
+      renderTopLevelProperties(library, options, templates);
 }
 
 /// Typedefs page.
 class TypedefsPage extends DocFile {
   final Library library;
+  final RenderOptions options;
   final Templates templates;
 
-  TypedefsPage(this.library, this.templates) : super('typedefs.md');
+  TypedefsPage(this.library, this.options, this.templates)
+    : super('typedefs.md');
 
   @override
-  String renderContent() => renderTypedefs(library, templates);
+  String renderContent() => renderTypedefs(library, options, templates);
 }
 
 /// Category/topic page.

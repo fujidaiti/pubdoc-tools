@@ -10,6 +10,7 @@ class MarkdownRenderer {
   final PackageGraph packageGraph;
   final int sourceLineThreshold;
   final bool includeSource;
+  final String packageRoot;
 
   late final RenderOptions _options;
 
@@ -17,10 +18,12 @@ class MarkdownRenderer {
     required this.packageGraph,
     this.sourceLineThreshold = 10,
     this.includeSource = true,
+    required this.packageRoot,
   }) {
     _options = RenderOptions(
       sourceLineThreshold: sourceLineThreshold,
       includeSource: includeSource,
+      packageRoot: packageRoot,
     );
   }
 
@@ -215,7 +218,7 @@ class MarkdownRenderer {
     var constants = library.constants.where((c) => c.isPublic);
     if (properties.isNotEmpty || constants.isNotEmpty) {
       var propDir = DocDir('top-level-properties');
-      propDir.children.add(TopLevelPropertiesPage(library, templates));
+      propDir.children.add(TopLevelPropertiesPage(library, _options, templates));
       libDir.children.add(propDir);
     }
 
@@ -223,7 +226,7 @@ class MarkdownRenderer {
     var typedefs = library.typedefs.where((t) => t.isPublic);
     if (typedefs.isNotEmpty) {
       var tdDir = DocDir('typedefs');
-      tdDir.children.add(TypedefsPage(library, templates));
+      tdDir.children.add(TypedefsPage(library, _options, templates));
       libDir.children.add(tdDir);
     }
 
