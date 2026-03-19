@@ -163,7 +163,7 @@ void main() {
   });
 
   group('CacheMetadata', () {
-    test('round-trips through JSON', () {
+    test('serializes and deserializes all fields', () {
       final metadata = CacheMetadata(
         version: '5.3.x',
         packageVersion: '5.3.4',
