@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:file/file.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import 'cache.dart';
@@ -122,6 +123,7 @@ class GetResult {
 ///
 /// All top-level fields other than `packages` are preserved.
 /// Returns a new map; the originals are not modified.
+@visibleForTesting
 Map<String, dynamic> buildPackageConfigFor({
   required String package,
   required Map<String, dynamic> projectPackageConfig,
@@ -155,6 +157,20 @@ Map<String, dynamic> buildPackageConfigFor({
       if (visited.contains((pkg as Map<String, dynamic>)['name'])) pkg,
   ];
   return result;
+}
+
+/// Recursively copies the contents of [src] into [dst].
+void _copyDirectory(Directory src, Directory dst) {
+  for (final entity in src.listSync()) {
+    final name = p.basename(entity.path);
+    if (entity is File) {
+      entity.copySync(p.join(dst.path, name));
+    } else if (entity is Directory) {
+      final sub = dst.childDirectory(name);
+      sub.createSync();
+      _copyDirectory(entity, sub);
+    }
+  }
 }
 
 class GetCommand {
@@ -324,19 +340,5 @@ class GetCommand {
 
     link.createSync(cacheDir);
     env.logger?.detail('  Symlink: $linkPath -> $cacheDir');
-  }
-
-  /// Recursively copies the contents of [src] into [dst].
-  void _copyDirectory(Directory src, Directory dst) {
-    for (final entity in src.listSync()) {
-      final name = p.basename(entity.path);
-      if (entity is File) {
-        entity.copySync(p.join(dst.path, name));
-      } else if (entity is Directory) {
-        final sub = dst.childDirectory(name);
-        sub.createSync();
-        _copyDirectory(entity, sub);
-      }
-    }
   }
 }

@@ -1,34 +1,60 @@
 import 'package:pubdoc/src/get_command.dart';
 import 'package:test/test.dart';
 
+typedef _ConfigPackage = ({String name, String rootUri, String packageUri});
+typedef _GraphPackage = ({String name, List<String> deps});
+
+Map<String, dynamic> _buildPackageConfig(
+  List<_ConfigPackage> packages, {
+  int configVersion = 2,
+  Map<String, dynamic> extra = const {},
+}) {
+  return {
+    'configVersion': configVersion,
+    ...extra,
+    'packages': [
+      for (final p in packages)
+        {'name': p.name, 'rootUri': p.rootUri, 'packageUri': p.packageUri},
+    ],
+  };
+}
+
+Map<String, dynamic> _buildPackageGraph(
+  List<_GraphPackage> packages, {
+  int configVersion = 1,
+}) {
+  return {
+    'configVersion': configVersion,
+    'packages': [
+      for (final p in packages) {'name': p.name, 'dependencies': p.deps},
+    ],
+  };
+}
+
+List<String> _packageNames(Map<String, dynamic> config) {
+  return [
+    for (final p in config['packages'] as List)
+      (p as Map<String, dynamic>)['name'] as String,
+  ];
+}
+
 void main() {
   group('buildPackageConfigFor', () {
     test('returns transitive closure, excludes unrelated packages', () {
-      // Graph: A -> B -> C, D is unrelated
-      final packageConfig = {
-        'configVersion': 2,
-        'packages': [
-          {'name': 'A', 'rootUri': '../a', 'packageUri': 'lib/'},
-          {'name': 'B', 'rootUri': '../b', 'packageUri': 'lib/'},
-          {'name': 'C', 'rootUri': '../c', 'packageUri': 'lib/'},
-          {'name': 'D', 'rootUri': '../d', 'packageUri': 'lib/'},
-        ],
-      };
-      final packageGraph = {
-        'configVersion': 1,
-        'packages': [
-          {
-            'name': 'A',
-            'dependencies': ['B'],
-          },
-          {
-            'name': 'B',
-            'dependencies': ['C'],
-          },
-          {'name': 'C', 'dependencies': <String>[]},
-          {'name': 'D', 'dependencies': <String>[]},
-        ],
-      };
+      final packageConfig = _buildPackageConfig([
+        (name: 'A', rootUri: '../a', packageUri: 'lib/'),
+        (name: 'B', rootUri: '../b', packageUri: 'lib/'),
+        (name: 'C', rootUri: '../c', packageUri: 'lib/'),
+        (name: 'D', rootUri: '../d', packageUri: 'lib/'),
+        (name: 'E', rootUri: '../e', packageUri: 'lib/'),
+      ]);
+      final packageGraph = _buildPackageGraph([
+        (name: 'A', deps: ['B']),
+        (name: 'B', deps: ['C', 'D']),
+        (name: 'C', deps: ['D']),
+        (name: 'D', deps: []),
+        (name: 'E', deps: []),
+      ]);
 
       final result = buildPackageConfigFor(
         package: 'A',
@@ -36,29 +62,19 @@ void main() {
         projectPackageGraph: packageGraph,
       );
 
-      final names = [
-        for (final p in result['packages'] as List)
-          (p as Map<String, dynamic>)['name'],
-      ];
-      expect(names, containsAll(['A', 'B', 'C']));
-      expect(names, isNot(contains('D')));
+      expect(_packageNames(result), containsAll(['A', 'B', 'C', 'D']));
+      expect(_packageNames(result), isNot(contains('E')));
     });
 
     test('root with no deps keeps only the root package', () {
-      final packageConfig = {
-        'configVersion': 2,
-        'packages': [
-          {'name': 'root', 'rootUri': '../root', 'packageUri': 'lib/'},
-          {'name': 'other', 'rootUri': '../other', 'packageUri': 'lib/'},
-        ],
-      };
-      final packageGraph = {
-        'configVersion': 1,
-        'packages': [
-          {'name': 'root', 'dependencies': <String>[]},
-          {'name': 'other', 'dependencies': <String>[]},
-        ],
-      };
+      final packageConfig = _buildPackageConfig([
+        (name: 'root', rootUri: '../root', packageUri: 'lib/'),
+        (name: 'other', rootUri: '../other', packageUri: 'lib/'),
+      ]);
+      final packageGraph = _buildPackageGraph([
+        (name: 'root', deps: []),
+        (name: 'other', deps: []),
+      ]);
 
       final result = buildPackageConfigFor(
         package: 'root',
@@ -66,28 +82,15 @@ void main() {
         projectPackageGraph: packageGraph,
       );
 
-      final names = [
-        for (final p in result['packages'] as List)
-          (p as Map<String, dynamic>)['name'],
-      ];
-      expect(names, ['root']);
+      expect(_packageNames(result), ['root']);
     });
 
     test('preserves top-level fields', () {
-      final packageConfig = {
-        'configVersion': 2,
-        'generator': 'pub',
-        'generatorVersion': '3.0.0',
-        'packages': [
-          {'name': 'foo', 'rootUri': '../foo', 'packageUri': 'lib/'},
-        ],
-      };
-      final packageGraph = {
-        'configVersion': 1,
-        'packages': [
-          {'name': 'foo', 'dependencies': <String>[]},
-        ],
-      };
+      final packageConfig = _buildPackageConfig(
+        [(name: 'foo', rootUri: '../foo', packageUri: 'lib/')],
+        extra: {'generator': 'pub', 'generatorVersion': '3.0.0'},
+      );
+      final packageGraph = _buildPackageGraph([(name: 'foo', deps: [])]);
 
       final result = buildPackageConfigFor(
         package: 'foo',
@@ -101,18 +104,14 @@ void main() {
     });
 
     test('does not modify the original maps', () {
-      final packages = [
-        {'name': 'A', 'rootUri': '../a', 'packageUri': 'lib/'},
-        {'name': 'B', 'rootUri': '../b', 'packageUri': 'lib/'},
-      ];
-      final packageConfig = {'configVersion': 2, 'packages': packages};
-      final packageGraph = {
-        'configVersion': 1,
-        'packages': [
-          {'name': 'A', 'dependencies': <String>[]},
-          {'name': 'B', 'dependencies': <String>[]},
-        ],
-      };
+      final packageConfig = _buildPackageConfig([
+        (name: 'A', rootUri: '../a', packageUri: 'lib/'),
+        (name: 'B', rootUri: '../b', packageUri: 'lib/'),
+      ]);
+      final packageGraph = _buildPackageGraph([
+        (name: 'A', deps: []),
+        (name: 'B', deps: []),
+      ]);
 
       buildPackageConfigFor(
         package: 'A',
@@ -120,8 +119,13 @@ void main() {
         projectPackageGraph: packageGraph,
       );
 
-      // Original packages list should still have both entries.
-      expect(packages.length, 2);
+      expect(
+        packageConfig,
+        _buildPackageConfig([
+          (name: 'A', rootUri: '../a', packageUri: 'lib/'),
+          (name: 'B', rootUri: '../b', packageUri: 'lib/'),
+        ]),
+      );
     });
   });
 }
