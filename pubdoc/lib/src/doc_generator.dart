@@ -1,6 +1,7 @@
 import 'package:dartdoc_txt/dartdoc_txt.dart';
 
 import 'environment.dart';
+import 'logger.dart';
 
 class DocGenerator {
   final Environment env;
@@ -19,7 +20,7 @@ class DocGenerator {
       outDir.deleteSync(recursive: true);
     }
 
-    env.logger?.detail('Analyzing package at $sourcePath...');
+    log.fine('Analyzing package at $sourcePath...');
     await generateDocs(inputDir: sourcePath, outputDir: outputDir);
   }
 }

@@ -5,7 +5,6 @@ import 'package:file/memory.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:pubdoc/src/environment.dart';
-import 'package:pubdoc/src/logger.dart';
 
 class PubspecYaml {
   final File _file;
@@ -148,13 +147,9 @@ class TestEnvironment implements Environment {
   @override
   final MemoryFileSystem fs;
 
-  @override
-  final Logger? logger;
-
   TestEnvironment({
     required this.projectRoot,
     required this.pubCacheBase,
-    this.logger,
     Map<String, String> variables = const {},
   }) : fs = MemoryFileSystem.test(),
        _variables = variables {
@@ -245,7 +240,6 @@ class WorkspaceTestEnvironment extends TestEnvironment {
     required String workspaceRoot,
     required this.memberRelativePath,
     required super.pubCacheBase,
-    super.logger,
   }) : memberRoot = p.join(workspaceRoot, memberRelativePath),
        super(projectRoot: workspaceRoot) {
     memberPubspec = PubspecYaml(fs.file(p.join(memberRoot, 'pubspec.yaml')));

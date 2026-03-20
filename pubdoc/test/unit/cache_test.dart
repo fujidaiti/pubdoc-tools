@@ -3,15 +3,12 @@ import 'package:pub_semver/pub_semver.dart';
 import 'package:pubdoc/src/cache.dart';
 import 'package:pubdoc/src/config.dart';
 import 'package:pubdoc/src/environment.dart';
-import 'package:pubdoc/src/logger.dart';
 import 'package:pubdoc/src/version_resolution.dart';
 import 'package:test/test.dart';
 
 class _TestEnvironment implements Environment {
   @override
   final MemoryFileSystem fs;
-  @override
-  final Logger? logger = null;
   @override
   final String toolVersion;
 
