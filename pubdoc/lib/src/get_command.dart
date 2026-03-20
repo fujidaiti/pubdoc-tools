@@ -9,6 +9,7 @@ import 'config.dart';
 import 'doc_generator.dart';
 import 'environment.dart';
 import 'exceptions.dart';
+import 'logger.dart';
 import 'project.dart';
 import 'version_resolution.dart';
 
@@ -220,19 +221,19 @@ class GetCommand {
     CacheManager cacheManager,
     DocGenerator generator,
   ) async {
-    env.logger?.info('Processing $packageName...');
+    log.info('Processing $packageName...');
 
     // 1. Detect version from pubspec.lock.
     final version = project.getPackageVersion(packageName);
-    env.logger?.detail('  Version in pubspec.lock: $version');
+    log.fine('Version in pubspec.lock: $version');
 
     // 2. Find source path from package_config.json.
     final sourceDir = project.getPackageSourceDir(packageName);
-    env.logger?.detail('  Source: ${sourceDir.path}');
+    log.fine('Source: ${sourceDir.path}');
 
     // 3. Resolve doc version.
     final docVersion = version.docVersion(strategy);
-    env.logger?.detail('  Doc version ($strategy): $docVersion');
+    log.fine('Doc version ($strategy): $docVersion');
 
     // 4. Check cache.
     final cacheResult = cacheManager.checkCache(
@@ -241,13 +242,11 @@ class GetCommand {
       strategy: strategy,
       useCache: useCache,
     );
-    env.logger?.detail('  Cache action: ${cacheResult.action}');
+    log.fine('Cache action: ${cacheResult.action}');
 
     // 5. Generate if needed.
     if (cacheResult.action != CacheAction.reuse) {
-      env.logger?.info(
-        '  Generating documentation for $packageName $docVersion...',
-      );
+      log.info('Generating documentation for $packageName $docVersion...');
 
       // Copy the package source into a temp directory and synthesize
       // .dart_tool/package_config.json so the analyzer can resolve
@@ -301,9 +300,9 @@ class GetCommand {
         toolVersion: env.toolVersion,
       ).write(cacheResult.cacheDir, fs: env.fs);
 
-      env.logger?.info('  Documentation generated.');
+      log.info('Documentation generated.');
     } else {
-      env.logger?.info('  Using cached documentation.');
+      log.info('Using cached documentation.');
     }
 
     // 8. Create/update symlink.
@@ -339,6 +338,6 @@ class GetCommand {
     }
 
     link.createSync(cacheDir);
-    env.logger?.detail('  Symlink: $linkPath -> $cacheDir');
+    log.fine('Symlink: $linkPath -> $cacheDir');
   }
 }

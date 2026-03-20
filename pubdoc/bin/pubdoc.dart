@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
-import 'package:logging/logging.dart' as logging;
+import 'package:logging/logging.dart';
 import 'package:pubdoc/src/config.dart';
 import 'package:pubdoc/src/environment.dart';
 import 'package:pubdoc/src/exceptions.dart';
@@ -17,6 +17,9 @@ String _toJson(Object? obj, int indent) => indent == 0
     : JsonEncoder.withIndent(' ' * indent).convert(obj);
 
 class _PubdocRunner extends CommandRunner<int> {
+  final List<String> _logs = [];
+  final List<String> _errors = [];
+
   _PubdocRunner()
     : super('pubdoc', 'Generate documentation for Dart packages.') {
     argParser
@@ -43,6 +46,8 @@ class _PubdocRunner extends CommandRunner<int> {
       print('pubdoc version: ${PlatformEnvironment().toolVersion}');
       return 0;
     }
+
+    final verbose = topLevelResults.flag('verbose');
     final rawJson = topLevelResults['json'] as String?;
     final jsonIndent = rawJson == null ? null : int.tryParse(rawJson);
     if (rawJson != null && (jsonIndent == null || jsonIndent < 0)) {
@@ -50,6 +55,21 @@ class _PubdocRunner extends CommandRunner<int> {
         '--json requires a non-negative integer (e.g. --json=0 or --json=2).',
       );
     }
+    final useJson = jsonIndent != null;
+
+    // Configure logging.
+    Logger.root.level = verbose ? Level.ALL : Level.INFO;
+    Logger.root.onRecord.listen((record) {
+      final message = verbose
+          ? '[${record.loggerName}] ${record.message}'
+          : record.message;
+      if (useJson) {
+        (record.level >= Level.WARNING ? _errors : _logs).add(message);
+      } else {
+        (record.level >= Level.WARNING ? stderr : stdout).writeln(message);
+      }
+    });
+
     return super.runCommand(topLevelResults);
   }
 }
@@ -97,23 +117,13 @@ class _GetCommand extends Command<int> {
 
   @override
   Future<int> run() async {
-    // Suppress dartdoc warnings (e.g., undefined macro warnings) that are
-    // unactionable noise for end users. The --quiet flag only suppresses
-    // INFO/DEBUG output, not warnings.
-    // This works because Logger instances are singletons keyed by name, so
-    // Logger('dartdoc') returns the same instance used by dartdoc internally.
-    logging.hierarchicalLoggingEnabled = true;
-    logging.Logger('dartdoc').level = logging.Level.OFF;
-
+    final runner = this.runner as _PubdocRunner;
     final global = globalResults!;
-    final verbose = global.flag('verbose');
     final rawJson = global['json'] as String?;
     final jsonIndent = rawJson == null ? null : int.tryParse(rawJson);
     final useJson = jsonIndent != null;
 
-    final env = useJson
-        ? PlatformEnvironment(logger: CollectingLogger(verbose: verbose))
-        : PlatformEnvironment(verbose: verbose);
+    final env = PlatformEnvironment();
     final config = PubdocConfig.resolve(env);
     final projectPath = argResults!.option('project') ?? Directory.current.path;
     final project = ProjectContext.from(projectPath, env: env);
@@ -134,13 +144,12 @@ class _GetCommand extends Command<int> {
       ).run(packageNames: argResults!.rest);
 
       if (useJson) {
-        final cl = env.logger as CollectingLogger;
         print(
           _toJson({
             'output': result.toJson(),
-            'errors': cl.errors,
-            'logs': cl.logs,
-          }, jsonIndent!),
+            'errors': runner._errors,
+            'logs': runner._logs,
+          }, jsonIndent),
         );
       } else {
         print(result.format());
@@ -148,16 +157,15 @@ class _GetCommand extends Command<int> {
       return 0;
     } on PubdocException catch (e) {
       if (useJson) {
-        final cl = env.logger as CollectingLogger;
         print(
           _toJson({
             'output': null,
-            'errors': [...cl.errors, e.message],
-            'logs': cl.logs,
-          }, jsonIndent!),
+            'errors': [...runner._errors, e.message],
+            'logs': runner._logs,
+          }, jsonIndent),
         );
       } else {
-        env.logger?.error(e.message);
+        log.severe(e.message);
       }
       return 1;
     }
