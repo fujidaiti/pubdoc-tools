@@ -1,12 +1,17 @@
 import 'dart:io';
 
 import 'package:dartdoc_txt/dartdoc_txt.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 import '../test_helper.dart';
 
 void main() {
+  // These two lines supress logging from dartdoc.
+  hierarchicalLoggingEnabled = true;
+  Logger('dartdoc').level = Level.OFF;
+
   group('basic_library', () => _goldenTest('basic_library'));
   group('edge_cases', () => _goldenTest('edge_cases'));
   group('anonymous_library', () => _goldenTest('anonymous_library'));

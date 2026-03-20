@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 
-/// Package-global logger for pubdoc.
-final log = Logger('pubdoc');
+/// Package-global logger for dartdoc_txt.
+final log = Logger('dartdoc_txt');
 
 /// Configures the root logger for CLI usage.
 ///
