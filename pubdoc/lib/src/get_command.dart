@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:file/file.dart';
 import 'package:path/path.dart' as p;
 
@@ -90,6 +92,71 @@ class GetResult {
   }
 }
 
+/// Creates a package_config.json for [package] from the project-level
+/// [projectPackageConfig] and the dependency graph [projectPackageGraph].
+///
+/// The result contains only the packages that [package] transitively
+/// depends on, so the analyzer doesn't index unrelated packages.
+///
+/// [projectPackageConfig] is the parsed `.dart_tool/package_config.json`:
+/// ```json
+/// {
+///   "configVersion": 2,
+///   "packages": [
+///     {"name": "foo", "rootUri": "...", "packageUri": "lib/"},
+///     ...
+///   ]
+/// }
+/// ```
+///
+/// [projectPackageGraph] is the parsed `.dart_tool/package_graph.json`:
+/// ```json
+/// {
+///   "configVersion": 1,
+///   "packages": [
+///     {"name": "foo", "dependencies": ["bar", "baz"]},
+///     ...
+///   ]
+/// }
+/// ```
+///
+/// All top-level fields other than `packages` are preserved.
+/// Returns a new map; the originals are not modified.
+Map<String, dynamic> buildPackageConfigFor({
+  required String package,
+  required Map<String, dynamic> projectPackageConfig,
+  required Map<String, dynamic> projectPackageGraph,
+}) {
+  // Build adjacency map from the graph.
+  final graphPackages = projectPackageGraph['packages'] as List<dynamic>;
+  final graph = <String, List<String>>{};
+  for (final pkg in graphPackages) {
+    final map = pkg as Map<String, dynamic>;
+    final name = map['name'] as String;
+    final deps = (map['dependencies'] as List<dynamic>).cast<String>();
+    graph[name] = deps;
+  }
+
+  // BFS from package to find transitive closure.
+  final visited = <String>{};
+  final queue = [package];
+  while (queue.isNotEmpty) {
+    final current = queue.removeAt(0);
+    if (!visited.add(current)) continue;
+    final deps = graph[current];
+    if (deps != null) queue.addAll(deps);
+  }
+
+  // Filter package_config packages to only those in the transitive closure.
+  final configPackages = projectPackageConfig['packages'] as List<dynamic>;
+  final result = Map<String, dynamic>.of(projectPackageConfig);
+  result['packages'] = [
+    for (final pkg in configPackages)
+      if (visited.contains((pkg as Map<String, dynamic>)['name'])) pkg,
+  ];
+  return result;
+}
+
 class GetCommand {
   final ProjectContext project;
   final PubdocConfig config;
@@ -176,10 +243,25 @@ class GetCommand {
         _copyDirectory(sourceDir, tempDir);
         final dartToolDir = tempDir.childDirectory('.dart_tool');
         dartToolDir.createSync();
-        final transitiveDeps = project.getTransitiveDependencies(packageName);
+        final packageConfigJson =
+            jsonDecode(project.packageConfigFile.readAsStringSync())
+                as Map<String, dynamic>;
+        final Map<String, dynamic> configToWrite;
+        if (project.packageGraphFile.existsSync()) {
+          final graphJson =
+              jsonDecode(project.packageGraphFile.readAsStringSync())
+                  as Map<String, dynamic>;
+          configToWrite = buildPackageConfigFor(
+            package: packageName,
+            projectPackageConfig: packageConfigJson,
+            projectPackageGraph: graphJson,
+          );
+        } else {
+          configToWrite = packageConfigJson;
+        }
         dartToolDir
             .childFile('package_config.json')
-            .writeAsStringSync(project.filteredPackageConfig(transitiveDeps));
+            .writeAsStringSync(jsonEncode(configToWrite));
 
         await generator.generate(
           sourcePath: tempDir.path,
