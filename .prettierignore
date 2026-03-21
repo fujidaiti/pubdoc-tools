@@ -1,2 +1,3 @@
 # Test fixtures
-dartdoc_txt/test/
+dartdoc_txt/golden_test/fixture/
+dartdoc_txt/golden_test/golden/
