@@ -3,15 +3,13 @@ import 'dart:io' show Platform;
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 
-import 'logger.dart';
-
-/// Abstracts all I/O operations (file system, logging, environment variables).
+/// Abstracts all I/O operations (file system, environment variables).
 ///
 /// Implement this class to substitute the I/O layer in tests.
 abstract class Environment {
   FileSystem get fs;
-  Logger? get logger;
   String? getVariable(String name);
+  String get toolVersion;
 }
 
 /// The default [Environment] backed by real platform I/O.
@@ -20,11 +18,8 @@ class PlatformEnvironment implements Environment {
   final FileSystem fs = const LocalFileSystem();
 
   @override
-  final Logger? logger;
-
-  PlatformEnvironment({bool verbose = false, Logger? logger})
-    : logger = logger ?? Logger(verbose: verbose);
+  String? getVariable(String name) => Platform.environment[name];
 
   @override
-  String? getVariable(String name) => Platform.environment[name];
+  String get toolVersion => '0.0.1';
 }

@@ -1,20 +1,24 @@
+// dartdoc does not re-export model classes from its public API.
+// ignore: implementation_imports
 import 'package:dartdoc/src/model/model.dart';
+import 'package:dartdoc_txt/src/doc_tree.dart';
+import 'package:dartdoc_txt/src/signature_builder.dart';
+import 'package:dartdoc_txt/src/template_loader.dart';
+import 'package:dartdoc_txt/src/utilities.dart';
 import 'package:path/path.dart' as p;
-
-import 'doc_tree.dart';
-import 'signature_builder.dart';
-import 'template_loader.dart';
-import 'utilities.dart';
 
 /// Options controlling rendering behavior.
 class RenderOptions {
-  final int sourceLineThreshold;
-  final bool includeSource;
-
   const RenderOptions({
+    required this.packageRoot,
     this.sourceLineThreshold = 10,
     this.includeSource = true,
+    this.fileExtension = 'md',
   });
+  final String packageRoot;
+  final int sourceLineThreshold;
+  final bool includeSource;
+  final String fileExtension;
 }
 
 /// Renders a container (Class, Enum, Mixin, ExtensionType) to Markdown.
@@ -23,7 +27,7 @@ String renderContainer(
   RenderOptions options,
   Templates templates,
 ) {
-  var data = _containerData(container, options);
+  final data = _containerData(container, options);
   return templates['container'].renderString(data);
 }
 
@@ -42,13 +46,15 @@ String renderTopLevelFunctions(
   RenderOptions options,
   Templates templates,
 ) {
-  var functions = library.functions.where((f) => f.isPublic).toList();
-  if (functions.isEmpty) return '';
+  final functions = library.functions.where((f) => f.isPublic).toList();
+  if (functions.isEmpty) {
+    return '';
+  }
 
-  var data = {
+  final data = {
     'libraryName': library.name,
     'functions': functions.map((func) {
-      var sourceData = _sourceData(func, func.name, options);
+      final sourceData = _sourceData(func, func.name, options);
       return {
         'name': func.name,
         'signature': renderSignature(func),
@@ -59,6 +65,7 @@ String renderTopLevelFunctions(
         'hasDocumentation': _cleanDoc(func.documentation).isNotEmpty,
         'documentation': _cleanDoc(func.documentation),
         ...sourceData,
+        ..._sourceLocationData(func, options.packageRoot),
       };
     }).toList(),
   };
@@ -67,16 +74,22 @@ String renderTopLevelFunctions(
 }
 
 /// Renders all top-level properties and constants for a library.
-String renderTopLevelProperties(Library library, Templates templates) {
-  var properties = library.properties.where((p) => p.isPublic).toList();
-  var constants = library.constants.where((c) => c.isPublic).toList();
-  if (properties.isEmpty && constants.isEmpty) return '';
+String renderTopLevelProperties(
+  Library library,
+  RenderOptions options,
+  Templates templates,
+) {
+  final properties = library.properties.where((p) => p.isPublic).toList();
+  final constants = library.constants.where((c) => c.isPublic).toList();
+  if (properties.isEmpty && constants.isEmpty) {
+    return '';
+  }
 
-  var data = {
+  final data = {
     'libraryName': library.name,
     'hasConstants': constants.isNotEmpty,
     'constants': constants.map((c) {
-      var doc = _cleanDoc(c.documentation);
+      final doc = _cleanDoc(c.documentation);
       return {
         'name': c.name,
         'typeName': plainTypeName(c.modelType),
@@ -84,16 +97,18 @@ String renderTopLevelProperties(Library library, Templates templates) {
         'constantValue': unescapeHtml(c.constantValueBase),
         'hasDocumentation': doc.isNotEmpty,
         'documentation': doc,
+        ..._sourceLocationData(c, options.packageRoot),
       };
     }).toList(),
     'hasProperties': properties.isNotEmpty,
     'properties': properties.map((prop) {
-      var doc = _cleanDoc(prop.documentation);
+      final doc = _cleanDoc(prop.documentation);
       return {
         'name': prop.name,
         'typeName': plainTypeName(prop.modelType),
         'hasDocumentation': doc.isNotEmpty,
         'documentation': doc,
+        ..._sourceLocationData(prop, options.packageRoot),
       };
     }).toList(),
   };
@@ -102,19 +117,26 @@ String renderTopLevelProperties(Library library, Templates templates) {
 }
 
 /// Renders all typedefs for a library.
-String renderTypedefs(Library library, Templates templates) {
-  var typedefs = library.typedefs.where((t) => t.isPublic).toList();
-  if (typedefs.isEmpty) return '';
+String renderTypedefs(
+  Library library,
+  RenderOptions options,
+  Templates templates,
+) {
+  final typedefs = library.typedefs.where((t) => t.isPublic).toList();
+  if (typedefs.isEmpty) {
+    return '';
+  }
 
-  var data = {
+  final data = {
     'libraryName': library.name,
     'typedefs': typedefs.map((td) {
-      var doc = _cleanDoc(td.documentation);
+      final doc = _cleanDoc(td.documentation);
       return {
         'name': td.name,
-        'sourceCode': unescapeHtml(td.sourceCode),
+        'sourceCode': _rawSourceCode(td),
         'hasDocumentation': doc.isNotEmpty,
         'documentation': doc,
+        ..._sourceLocationData(td, options.packageRoot),
       };
     }).toList(),
   };
@@ -129,14 +151,14 @@ String renderDetailPage(
   RenderOptions options,
   Templates templates,
 ) {
-  var title = element is Constructor
+  final title = element is Constructor
       ? (element.name == parentName ? '$parentName.new' : element.name)
       : '$parentName.${element.name}';
 
-  var annotations = renderAnnotations(element);
-  var doc = _cleanDoc(element.documentation);
+  final annotations = renderAnnotations(element);
+  final doc = _cleanDoc(element.documentation);
 
-  var data = {
+  final data = {
     'title': title,
     'signature': renderSignature(element),
     'hasAnnotations': annotations.isNotEmpty,
@@ -145,33 +167,60 @@ String renderDetailPage(
     'deprecation': renderDeprecation(element),
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
-    'sourceCode': unescapeHtml(element.sourceCode),
+    'sourceCode': _rawSourceCode(element),
+    ..._sourceLocationData(element, options.packageRoot),
   };
 
   return templates['detail_page'].renderString(data);
 }
 
 /// Renders a category page.
-String renderCategory(Category category, Templates templates) {
-  var doc = category.documentation;
-  var cleanDoc = (doc != null && doc.isNotEmpty) ? stripResidualHtml(doc) : '';
+String renderCategory(
+  Category category,
+  Templates templates,
+  Map<String, String> elementLibraryMap,
+) {
+  final doc = category.documentation;
+  final cleanDoc = (doc != null && doc.isNotEmpty)
+      ? stripResidualHtml(doc)
+      : '';
 
-  var sections = <Map<String, dynamic>>[];
-  _addCategorySection(sections, 'Classes', category.classes, category);
-  _addCategorySection(sections, 'Enums', category.enums, category);
-  _addCategorySection(sections, 'Mixins', category.mixins, category);
-  _addCategorySection(sections, 'Extensions', category.extensions, category);
+  final sections = <Map<String, dynamic>>[];
+  _addCategorySection(sections, 'Classes', category.classes, elementLibraryMap);
+  _addCategorySection(sections, 'Enums', category.enums, elementLibraryMap);
+  _addCategorySection(sections, 'Mixins', category.mixins, elementLibraryMap);
+  _addCategorySection(
+    sections,
+    'Extensions',
+    category.extensions,
+    elementLibraryMap,
+  );
   _addCategorySection(
     sections,
     'Extension Types',
     category.extensionTypes,
-    category,
+    elementLibraryMap,
   );
-  _addCategorySection(sections, 'Functions', category.functions, category);
-  _addCategorySection(sections, 'Properties', category.properties, category);
-  _addCategorySection(sections, 'Typedefs', category.typedefs, category);
+  _addCategorySection(
+    sections,
+    'Functions',
+    category.functions,
+    elementLibraryMap,
+  );
+  _addCategorySection(
+    sections,
+    'Properties',
+    category.properties,
+    elementLibraryMap,
+  );
+  _addCategorySection(
+    sections,
+    'Typedefs',
+    category.typedefs,
+    elementLibraryMap,
+  );
 
-  var data = {
+  final data = {
     'hasDocumentation': cleanDoc.isNotEmpty,
     'documentation': cleanDoc,
     'sections': sections,
@@ -180,10 +229,18 @@ String renderCategory(Category category, Templates templates) {
   return templates['category'].renderString(data);
 }
 
+/// Returns the raw source code for an element, bypassing dartdoc's HTML
+/// escaping.
+String _rawSourceCode(ModelElement element) {
+  return element.modelNode?.sourceCode ?? '';
+}
+
 // --- Private helpers ---
 
 String _cleanDoc(String? documentation) {
-  if (documentation == null || documentation.isEmpty) return '';
+  if (documentation == null || documentation.isEmpty) {
+    return '';
+  }
   return stripResidualHtml(documentation);
 }
 
@@ -191,15 +248,15 @@ Map<String, dynamic> _containerData(
   Container container,
   RenderOptions options,
 ) {
-  var doc = _cleanDoc(container.documentation);
+  final doc = _cleanDoc(container.documentation);
 
   // Enum values
-  var hasEnumValues =
+  final hasEnumValues =
       container is Enum && container.publicEnumValues.isNotEmpty;
-  var enumValues = <Map<String, dynamic>>[];
+  final enumValues = <Map<String, dynamic>>[];
   if (container is Enum) {
-    for (var value in container.publicEnumValues) {
-      var valueDoc = _cleanDoc(value.documentation);
+    for (final value in container.publicEnumValues) {
+      final valueDoc = _cleanDoc(value.documentation);
       enumValues.add({
         'name': value.name,
         'hasDocumentation': valueDoc.isNotEmpty,
@@ -209,43 +266,43 @@ Map<String, dynamic> _containerData(
   }
 
   // Constructors
-  var hasConstructors =
+  final hasConstructors =
       container is Constructable && container.hasPublicConstructors;
-  var constructors = <Map<String, dynamic>>[];
+  final constructors = <Map<String, dynamic>>[];
   if (container is Constructable) {
-    for (var ctor in container.publicConstructorsSorted) {
+    for (final ctor in container.publicConstructorsSorted) {
       constructors.add(_constructorData(ctor, container.name, options));
     }
   }
 
   // Properties (declared only, not inherited, excluding enum values)
-  var publicFields = container.declaredFields
+  final publicFields = container.declaredFields
       .where((f) => f.isPublic && !f.isEnumValue)
       .where((f) => f.name != 'hashCode')
       .toList();
-  var properties = publicFields.map(_fieldData).toList();
+  final properties = publicFields.map(_fieldData).toList();
 
   // Methods (declared only, not inherited)
-  var publicMethods = container.declaredMethods
+  final publicMethods = container.declaredMethods
       .whereType<Method>()
       .where((m) => !m.isOperator)
       .where((m) => m.isPublic)
       .where((m) => m.name != 'toString')
       .toList();
-  var publicStaticMethods = container.staticMethods
+  final publicStaticMethods = container.staticMethods
       .where((m) => m.isPublic)
       .toList();
-  var allPublicMethods = [...publicMethods, ...publicStaticMethods];
-  var methods = allPublicMethods
+  final allPublicMethods = [...publicMethods, ...publicStaticMethods];
+  final methods = allPublicMethods
       .map((m) => _methodData(m, container.name, options))
       .toList();
 
   // Operators (declared only, not inherited)
-  var publicOperators = container.declaredOperators
+  final publicOperators = container.declaredOperators
       .where((o) => o.isPublic)
       .where((o) => o.name != 'operator ==')
       .toList();
-  var operators = publicOperators
+  final operators = publicOperators
       .map((o) => _operatorData(o, container.name, options))
       .toList();
 
@@ -266,6 +323,7 @@ Map<String, dynamic> _containerData(
     'methods': methods,
     'hasOperators': publicOperators.isNotEmpty,
     'operators': operators,
+    ..._sourceLocationData(container, options.packageRoot),
   };
 }
 
@@ -274,9 +332,9 @@ Map<String, dynamic> _constructorData(
   String containerName,
   RenderOptions options,
 ) {
-  var annotations = renderAnnotations(ctor);
-  var doc = _cleanDoc(ctor.documentation);
-  var sourceData = options.includeSource
+  final annotations = renderAnnotations(ctor);
+  final doc = _cleanDoc(ctor.documentation);
+  final sourceData = options.includeSource
       ? _sourceData(
           ctor,
           '$containerName-${ctorBaseName(ctor.name, containerName)}',
@@ -293,12 +351,13 @@ Map<String, dynamic> _constructorData(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     ...sourceData,
+    ..._sourceLocationData(ctor, options.packageRoot),
   };
 }
 
 Map<String, dynamic> _fieldData(Field field) {
-  var attributes = renderAttributes(field);
-  var doc = _cleanDoc(field.documentation);
+  final attributes = renderAttributes(field);
+  final doc = _cleanDoc(field.documentation);
 
   return {
     'name': field.name,
@@ -317,9 +376,9 @@ Map<String, dynamic> _methodData(
   String containerName,
   RenderOptions options,
 ) {
-  var annotations = renderAnnotations(method);
-  var doc = _cleanDoc(method.documentation);
-  var sourceData = (options.includeSource && !method.element.isAbstract)
+  final annotations = renderAnnotations(method);
+  final doc = _cleanDoc(method.documentation);
+  final sourceData = (options.includeSource && !method.element.isAbstract)
       ? _sourceData(
           method,
           '$containerName-${safeFileName(method.name)}',
@@ -336,6 +395,7 @@ Map<String, dynamic> _methodData(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     ...sourceData,
+    ..._sourceLocationData(method, options.packageRoot),
   };
 }
 
@@ -344,9 +404,9 @@ Map<String, dynamic> _operatorData(
   String containerName,
   RenderOptions options,
 ) {
-  var doc = _cleanDoc(op.documentation);
-  var safeName = safeFileName('operator ${op.element.name}');
-  var sourceData = (options.includeSource && !op.element.isAbstract)
+  final doc = _cleanDoc(op.documentation);
+  final safeName = safeFileName('operator ${op.element.name}');
+  final sourceData = (options.includeSource && !op.element.isAbstract)
       ? _sourceData(op, '$containerName-$safeName', options)
       : _noSourceData();
 
@@ -355,7 +415,27 @@ Map<String, dynamic> _operatorData(
     'hasDocumentation': doc.isNotEmpty,
     'documentation': doc,
     ...sourceData,
+    ..._sourceLocationData(op, options.packageRoot),
   };
+}
+
+/// Computes source location data (relative path + line number range) for an
+/// element.
+Map<String, dynamic> _sourceLocationData(
+  ModelElement element,
+  String packageRoot,
+) {
+  final absolutePath = element.sourceFileName;
+  final relativePath = p.relative(absolutePath, from: packageRoot);
+  final startLine = element.characterLocation?.lineNumber;
+  if (startLine == null) {
+    return {'hasSourceLocation': true, 'sourceLocation': relativePath};
+  }
+  final lineCount = sourceLineCount(_rawSourceCode(element));
+  final location = lineCount > 0
+      ? '$relativePath:$startLine:${startLine + lineCount - 1}'
+      : '$relativePath:$startLine';
+  return {'hasSourceLocation': true, 'sourceLocation': location};
 }
 
 /// Computes source display data for an element.
@@ -364,10 +444,12 @@ Map<String, dynamic> _sourceData(
   String detailPath,
   RenderOptions options,
 ) {
-  var source = unescapeHtml(element.sourceCode);
-  if (source.isEmpty) return _noSourceData();
+  final source = _rawSourceCode(element);
+  if (source.isEmpty) {
+    return _noSourceData();
+  }
 
-  var lineCount = sourceLineCount(source);
+  final lineCount = sourceLineCount(source);
   if (lineCount <= options.sourceLineThreshold) {
     return {
       'hasInlineSource': true,
@@ -389,11 +471,19 @@ Map<String, dynamic> _noSourceData() {
 
 /// Returns true if a detail page is needed for this element.
 bool needsDetailPage(ModelElement element, RenderOptions options) {
-  if (!options.includeSource) return false;
-  if (element is Method && element.element.isAbstract) return false;
-  if (element is Operator && element.element.isAbstract) return false;
-  var source = unescapeHtml(element.sourceCode);
-  if (source.isEmpty) return false;
+  if (!options.includeSource) {
+    return false;
+  }
+  if (element is Method && element.element.isAbstract) {
+    return false;
+  }
+  if (element is Operator && element.element.isAbstract) {
+    return false;
+  }
+  final source = _rawSourceCode(element);
+  if (source.isEmpty) {
+    return false;
+  }
   return sourceLineCount(source) > options.sourceLineThreshold;
 }
 
@@ -401,19 +491,21 @@ void _addCategorySection(
   List<Map<String, dynamic>> sections,
   String heading,
   Iterable<ModelElement> elements,
-  Category category,
+  Map<String, String> elementLibraryMap,
 ) {
-  var publicElements = elements.where((e) => e.isPublic).toList();
-  if (publicElements.isEmpty) return;
+  final publicElements = elements.where((e) => e.isPublic).toList();
+  if (publicElements.isEmpty) {
+    return;
+  }
 
   sections.add({
     'heading': heading,
     'elements': publicElements.map((element) {
-      var lib = element.canonicalLibrary ?? element.library;
-      if (element is Container && lib != null) {
+      final libDir = elementLibraryMap[element.name];
+      if (element is Container && libDir != null) {
         return {
           'line':
-              '- [${element.name}](${lib.displayName}/${element.name}/${element.name}.md)',
+              '- [${element.name}]($libDir/${element.name}/${element.name}.md)',
         };
       } else {
         return {'line': '- ${element.name}'};
@@ -427,16 +519,19 @@ void _addCategorySection(
 // ---------------------------------------------------------------------------
 
 /// Computes the file name for a category/topic page.
-String topicFileName(Category category) {
+String topicFileName(Category category, [String fileExtension = 'md']) {
   final docFile = category.documentationFile;
-  if (docFile != null) return p.basename(docFile.path);
-  return '${category.name.replaceAll(RegExp(r'\s+'), '_')}.md';
+  if (docFile != null) {
+    return p.setExtension(p.basename(docFile.path), '.$fileExtension');
+  }
+  return '${category.name.replaceAll(RegExp(r'\s+'), '_')}.$fileExtension';
 }
 
 /// README page — strips HTML from package docs.
 class ReadmePage extends DocFile {
+  ReadmePage(this.documentation, {String fileExtension = 'md'})
+    : super('README.$fileExtension');
   final String documentation;
-  ReadmePage(this.documentation) : super('README.md');
 
   @override
   String renderContent() => stripResidualHtml(documentation);
@@ -444,35 +539,35 @@ class ReadmePage extends DocFile {
 
 /// Package-level INDEX.md.
 class IndexPage extends DocFile {
+  IndexPage(
+    this.package,
+    this.libraries,
+    this.templates,
+    this.librarySectionData, {
+    String fileExtension = 'md',
+  }) : super('INDEX.$fileExtension');
   final Package package;
   final List<Library> libraries;
   final Templates templates;
   final Map<String, dynamic> Function(Library) librarySectionData;
 
-  IndexPage(
-    this.package,
-    this.libraries,
-    this.templates,
-    this.librarySectionData,
-  ) : super('INDEX.md');
-
   @override
   String renderContent() {
-    var data = {
+    final data = {
       'packageName': package.name,
       'version': package.version,
       'hasCategories': package.hasDocumentedCategories,
       'categories': package.hasDocumentedCategories
           ? package.documentedCategoriesSorted.map((category) {
-              var summary = extractSummary(category.documentation);
-              var desc = summary.isNotEmpty ? ' — $summary' : '';
+              final summary = extractSummary(category.documentation);
+              final desc = summary.isNotEmpty ? ' — $summary' : '';
               return {
                 'line':
                     '- [${category.name}](topics/${topicFileName(category)})$desc',
               };
             }).toList()
           : <Map<String, dynamic>>[],
-      'libraries': libraries.map((lib) => librarySectionData(lib)).toList(),
+      'libraries': libraries.map(librarySectionData).toList(),
     };
     return templates['index'].renderString(data);
   }
@@ -480,12 +575,11 @@ class IndexPage extends DocFile {
 
 /// Container page (class, enum, mixin, extension, extension type).
 class ContainerPage extends DocFile {
+  ContainerPage(this.container, this.options, this.templates)
+    : super('${container.name}.${options.fileExtension}');
   final Container container;
   final RenderOptions options;
   final Templates templates;
-
-  ContainerPage(this.container, this.options, this.templates)
-    : super('${container.name}.md');
 
   @override
   String renderContent() => renderContainer(container, options, templates);
@@ -493,18 +587,17 @@ class ContainerPage extends DocFile {
 
 /// Detail page for members with large source.
 class DetailPage extends DocFile {
-  final ModelElement element;
-  final String parentName;
-  final RenderOptions options;
-  final Templates templates;
-
   DetailPage(
-    String fileName,
+    super.name,
     this.element,
     this.parentName,
     this.options,
     this.templates,
-  ) : super(fileName);
+  );
+  final ModelElement element;
+  final String parentName;
+  final RenderOptions options;
+  final Templates templates;
 
   @override
   String renderContent() =>
@@ -513,12 +606,11 @@ class DetailPage extends DocFile {
 
 /// Top-level functions page.
 class TopLevelFunctionsPage extends DocFile {
+  TopLevelFunctionsPage(this.library, this.options, this.templates)
+    : super('top-level-functions.${options.fileExtension}');
   final Library library;
   final RenderOptions options;
   final Templates templates;
-
-  TopLevelFunctionsPage(this.library, this.options, this.templates)
-    : super('top-level-functions.md');
 
   @override
   String renderContent() =>
@@ -527,34 +619,42 @@ class TopLevelFunctionsPage extends DocFile {
 
 /// Top-level properties page.
 class TopLevelPropertiesPage extends DocFile {
+  TopLevelPropertiesPage(this.library, this.options, this.templates)
+    : super('top-level-properties.${options.fileExtension}');
   final Library library;
+  final RenderOptions options;
   final Templates templates;
 
-  TopLevelPropertiesPage(this.library, this.templates)
-    : super('top-level-properties.md');
-
   @override
-  String renderContent() => renderTopLevelProperties(library, templates);
+  String renderContent() =>
+      renderTopLevelProperties(library, options, templates);
 }
 
 /// Typedefs page.
 class TypedefsPage extends DocFile {
+  TypedefsPage(this.library, this.options, this.templates)
+    : super('typedefs.${options.fileExtension}');
   final Library library;
+  final RenderOptions options;
   final Templates templates;
 
-  TypedefsPage(this.library, this.templates) : super('typedefs.md');
-
   @override
-  String renderContent() => renderTypedefs(library, templates);
+  String renderContent() => renderTypedefs(library, options, templates);
 }
 
 /// Category/topic page.
 class CategoryPage extends DocFile {
+  CategoryPage(
+    this.category,
+    this.templates, {
+    required this.elementLibraryMap,
+    String fileExtension = 'md',
+  }) : super(topicFileName(category, fileExtension));
   final Category category;
   final Templates templates;
-
-  CategoryPage(this.category, this.templates) : super(topicFileName(category));
+  final Map<String, String> elementLibraryMap;
 
   @override
-  String renderContent() => renderCategory(category, templates);
+  String renderContent() =>
+      renderCategory(category, templates, elementLibraryMap);
 }

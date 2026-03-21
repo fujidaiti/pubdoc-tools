@@ -1,39 +1,22 @@
+import 'dart:async';
 import 'dart:io';
 
-class Logger {
-  final bool verbose;
+import 'package:logging/logging.dart';
 
-  Logger({this.verbose = false});
+/// Package-global logger for pubdoc.
+final log = Logger('pubdoc');
 
-  void info(String message) {
-    stdout.writeln(message);
-  }
-
-  void detail(String message) {
-    if (verbose) {
-      stdout.writeln(message);
+/// Configures the root logger for CLI usage.
+///
+/// Routes INFO and below to stdout, WARNING and above to stderr.
+/// Returns the subscription so it can be cancelled if needed.
+StreamSubscription<LogRecord> setupLogging({bool verbose = false}) {
+  Logger.root.level = verbose ? Level.ALL : Level.INFO;
+  return Logger.root.onRecord.listen((record) {
+    if (record.level >= Level.WARNING) {
+      stderr.writeln(record.message);
+    } else {
+      stdout.writeln(record.message);
     }
-  }
-
-  void error(String message) {
-    stderr.writeln(message);
-  }
-}
-
-class CollectingLogger extends Logger {
-  final List<String> logs = [];
-  final List<String> errors = [];
-
-  CollectingLogger({super.verbose});
-
-  @override
-  void info(String message) => logs.add(message);
-
-  @override
-  void detail(String message) {
-    if (verbose) logs.add(message);
-  }
-
-  @override
-  void error(String message) => errors.add(message);
+  });
 }

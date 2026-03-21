@@ -1,5 +1,5 @@
 /// Mustache template for top-level properties and constants page.
-const topLevelPropertiesTemplate = r'''
+const topLevelPropertiesTemplate = '''
 # Top-level Properties — {{{libraryName}}}
 
 {{#hasConstants}}
@@ -12,6 +12,10 @@ const topLevelPropertiesTemplate = r'''
 `{{{constantValue}}}`
 
 {{/hasConstantValue}}
+{{#hasSourceLocation}}
+Source: {{{sourceLocation}}}
+
+{{/hasSourceLocation}}
 {{#hasDocumentation}}
 {{{documentation}}}
 
@@ -26,6 +30,10 @@ const topLevelPropertiesTemplate = r'''
 {{#properties}}
 ### {{{name}}} → {{{typeName}}}
 
+{{#hasSourceLocation}}
+Source: {{{sourceLocation}}}
+
+{{/hasSourceLocation}}
 {{#hasDocumentation}}
 {{{documentation}}}
 

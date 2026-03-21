@@ -1,0 +1,37 @@
+# Wrapper
+
+```dart
+extension type Wrapper
+```
+
+Source: lib/src/extensions.dart:37:40
+
+An extension type wrapping an [int].
+
+## Constructors
+
+### Wrapper.new(int value)
+
+Source: lib/src/extensions.dart:37
+
+---
+## Properties
+
+### value → int
+
+`final`
+
+---
+## Methods
+
+### doubled() → int
+
+Source: lib/src/extensions.dart:39:39
+
+Returns the value doubled.
+
+```dart
+int doubled() => value * 2;
+```
+
+---

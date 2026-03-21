@@ -1,0 +1,30 @@
+# StringHelper
+
+```dart
+class StringHelper
+```
+
+Source: lib/src/extensions.dart:45:48
+
+A string helper.
+
+## Constructors
+
+### StringHelper.new()
+
+Source: lib/src/extensions.dart:45
+
+---
+## Methods
+
+### reverse(String input) → String
+
+Source: lib/src/extensions.dart:47:47
+
+Reverses [input].
+
+```dart
+String reverse(String input) => input.split('').reversed.join();
+```
+
+---

@@ -24,6 +24,13 @@ dart run dartdoc_txt [options]
 | `-h`, `--help`          | Show usage information              |                         |
 | `--version`             | Print the tool version              |                         |
 
+### Prerequisites
+
+Run `dart pub get` (or `flutter pub get`) in the target package directory before
+running `dartdoc_txt`. The analyzer needs `.dart_tool/package_config.json` to
+resolve dependency types — without it, types from dependencies may appear as
+`dynamic` in the generated documentation.
+
 ### Example
 
 ```bash
@@ -34,17 +41,21 @@ dart run dartdoc_txt -i path/to/my_package -o docs
 
 ```
 <output>/
-├── index.md                    # Package overview + library & topic listing
+├── README.md                         # Package readme (if present)
+├── INDEX.md                          # Package overview + library & topic listing
 ├── topics/
-│   └── Getting-Started.md      # Category pages (from dartdoc_options.yaml)
+│   └── getting-started.md            # Category pages (from dartdoc_options.yaml)
 └── <library>/
-    ├── index.md                # Library overview + element listing
     ├── ClassName/
-    │   ├── ClassName.md        # One file per class/enum/mixin/extension
-    │   └── methodName.md       # Detail pages for large members
-    ├── top-level-functions.md  # Grouped top-level functions
-    ├── top-level-properties.md # Properties and constants
-    └── typedefs.md             # Type definitions
+    │   ├── ClassName.md              # One file per class/enum/mixin/extension
+    │   └── ClassName-methodName.md   # Detail pages for large members
+    ├── top-level-functions/
+    │   ├── top-level-functions.md    # Grouped top-level functions
+    │   └── functionName.md           # Detail pages for large functions
+    ├── top-level-properties/
+    │   └── top-level-properties.md   # Properties and constants
+    └── typedefs/
+        └── typedefs.md               # Type definitions
 ```
 
 ## Features

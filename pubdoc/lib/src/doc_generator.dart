@@ -1,11 +1,11 @@
 import 'package:dartdoc_txt/dartdoc_txt.dart';
 
-import 'environment.dart';
+import 'package:pubdoc/src/environment.dart';
+import 'package:pubdoc/src/logger.dart';
 
 class DocGenerator {
-  final Environment env;
-
   DocGenerator({required this.env});
+  final Environment env;
 
   /// Generates documentation for the package at [sourcePath] and writes it
   /// to [outputDir].
@@ -19,7 +19,10 @@ class DocGenerator {
       outDir.deleteSync(recursive: true);
     }
 
-    env.logger?.detail('Analyzing package at $sourcePath...');
-    await generateDocs(inputDir: sourcePath, outputDir: outputDir);
+    log.fine('Analyzing package at $sourcePath...');
+    await generateDocs(
+      outputDir: outputDir,
+      options: RenderOptions(packageRoot: sourcePath),
+    );
   }
 }

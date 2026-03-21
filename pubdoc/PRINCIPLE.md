@@ -104,12 +104,14 @@ contains:
   from firebase_core v4.5.4, then the version field would be `4.5.4`.
 - `source`: The actual source location of the package that the documentation is
   generated from.
+- `tool_version`: The version of pubdoc that generated the documentation.
 
 ```json
 {
   "version": "4.5.x",
   "package_version": "4.5.4",
-  "source": "file:///Users/username/.pub-cache/hosted/pub.dev/firebase_core-4.5.4"
+  "source": "file:///Users/username/.pub-cache/hosted/pub.dev/firebase_core-4.5.4",
+  "tool_version": "1.0.0"
 }
 ```
 
@@ -264,6 +266,35 @@ workspace root, and all individual projects share the same `.pubdoc/`. This is
 because the workspace projects share the same dependencies, as stated [here][3].
 
 [3]: https://dart.dev/tools/pub/workspaces
+
+### How are pre-release versions handled?
+
+Pre-release versions are always resolved as if the `exact` strategy were in
+effect, regardless of the configured resolution strategy. That is, `1.0.0-dev.1`
+always resolves to documentation version `1.0.0-dev.1`, never to a shared
+version like `1.0.x` or `1.x`, even if `loose-*` strategies are specified.
+
+Quoting the [SemVer specification][4] as to why this is the case:
+
+> A pre-release version indicates that the version is unstable and might not
+> satisfy the intended compatibility requirements as denoted by its associated
+> normal version.
+
+Note that this rule applies to documentation version resolution only. The rest
+of the flow—cache lookup, documentation generation, symlink creation—works the
+same way as for stable versions.
+
+The cache directory would look like this:
+
+```
+~/.pubdoc/cache/
+`-- firebase_core/
+    |-- firebase_core-2.0.0-beta.1/  # pre-release, always exact
+    |-- firebase_core-2.0.0-beta.2/  # pre-release, always exact
+    |-- firebase_core-2.x/           # loose-minor docs, never shared with pre-releases
+```
+
+[4]: https://semver.org/#spec-item-9
 
 ### When should I run `pubdoc get`?
 

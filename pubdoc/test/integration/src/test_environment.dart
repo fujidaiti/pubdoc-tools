@@ -5,9 +5,10 @@ import 'package:file/memory.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:pubdoc/src/environment.dart';
-import 'package:pubdoc/src/logger.dart';
+import 'package:pubdoc/src/project.dart' show ProjectContext;
 
 class PubspecYaml {
+  PubspecYaml(this._file);
   final File _file;
   final Map<String, String> _dependencies = {};
 
@@ -18,8 +19,6 @@ class PubspecYaml {
   /// The `workspace` field of the pubspec.yaml listing relative member paths.
   /// Non-empty only in a workspace root pubspec.yaml.
   final List<String> workspace = [];
-
-  PubspecYaml(this._file);
 
   Map<String, String> get dependencies => Map.unmodifiable(_dependencies);
 
@@ -36,7 +35,9 @@ class PubspecYaml {
   void write() {
     _file.parent.createSync(recursive: true);
     final buf = StringBuffer();
-    if (resolution != null) buf.writeln('resolution: $resolution');
+    if (resolution != null) {
+      buf.writeln('resolution: $resolution');
+    }
     if (workspace.isNotEmpty) {
       buf.writeln('workspace:');
       for (final m in workspace) {
@@ -48,10 +49,9 @@ class PubspecYaml {
 }
 
 class PubspecLock {
+  PubspecLock(this._file);
   final File _file;
   final Map<String, Map<String, dynamic>> _packages = {};
-
-  PubspecLock(this._file);
 
   void addPackage(
     String name, {
@@ -70,10 +70,9 @@ class PubspecLock {
 }
 
 class PackageConfigJson {
+  PackageConfigJson(this._file);
   final File _file;
   final List<({String name, String rootUri, String packageUri})> _packages = [];
-
-  PackageConfigJson(this._file);
 
   void addPackage({
     required String name,
@@ -107,24 +106,38 @@ class PackageConfigJson {
   void deleteSync() => _file.deleteSync();
 }
 
+class PackageGraphJson {
+  PackageGraphJson(this._file);
+  final File _file;
+  final List<({String name, List<String> dependencies})> _packages = [];
+
+  void addPackage({
+    required String name,
+    List<String> dependencies = const [],
+  }) {
+    _packages.add((name: name, dependencies: dependencies));
+  }
+
+  void clear() => _packages.clear();
+
+  void write() {
+    _file.parent.createSync(recursive: true);
+    _file.writeAsStringSync(
+      jsonEncode({
+        'configVersion': 1,
+        'packages': [
+          for (final pkg in _packages)
+            {'name': pkg.name, 'dependencies': pkg.dependencies},
+        ],
+      }),
+    );
+  }
+}
+
 class TestEnvironment implements Environment {
-  final String projectRoot;
-  final String pubCacheBase;
-  late final PubspecYaml pubspec;
-  late final PubspecLock pubspecLock;
-  late final PackageConfigJson packageConfig;
-  final Map<String, String> _variables;
-
-  @override
-  final MemoryFileSystem fs;
-
-  @override
-  final Logger? logger;
-
   TestEnvironment({
     required this.projectRoot,
     required this.pubCacheBase,
-    this.logger,
     Map<String, String> variables = const {},
   }) : fs = MemoryFileSystem.test(),
        _variables = variables {
@@ -133,10 +146,26 @@ class TestEnvironment implements Environment {
     packageConfig = PackageConfigJson(
       fs.file('$projectRoot/.dart_tool/package_config.json'),
     );
+    packageGraph = PackageGraphJson(
+      fs.file('$projectRoot/.dart_tool/package_graph.json'),
+    );
   }
+  final String projectRoot;
+  final String pubCacheBase;
+  late final PubspecYaml pubspec;
+  late final PubspecLock pubspecLock;
+  late final PackageConfigJson packageConfig;
+  late final PackageGraphJson packageGraph;
+  final Map<String, String> _variables;
+
+  @override
+  final MemoryFileSystem fs;
 
   @override
   String? getVariable(String name) => _variables[name];
+
+  @override
+  String get toolVersion => '1.0.0';
 
   var _setUpCalled = false;
 
@@ -172,6 +201,13 @@ class TestEnvironment implements Environment {
     }
     packageConfig.write();
 
+    // Write package_graph.json.
+    packageGraph._packages.clear();
+    for (final entry in pubspec.dependencies.entries) {
+      packageGraph.addPackage(name: entry.key);
+    }
+    packageGraph.write();
+
     // Create package source dirs in pub cache.
     for (final entry in pubspec.dependencies.entries) {
       fs
@@ -183,12 +219,22 @@ class TestEnvironment implements Environment {
 
 /// A [TestEnvironment] configured for a pub workspace scenario.
 ///
-/// The workspace root pubspec.yaml lists [memberRelativePath] under `workspace:`,
-/// and the member pubspec.yaml at [memberRoot] declares `resolution: workspace`.
+/// The workspace root pubspec.yaml lists [memberRelativePath] under
+/// `workspace:`, and the member pubspec.yaml at [memberRoot] declares
+/// `resolution: workspace`.
 /// Lock and config files are created under [projectRoot] (the workspace root),
 /// matching real pub workspace behavior. Use [memberRoot] as the `projectRoot`
 /// when constructing a [ProjectContext] to exercise workspace detection.
 class WorkspaceTestEnvironment extends TestEnvironment {
+  WorkspaceTestEnvironment({
+    required String workspaceRoot,
+    required this.memberRelativePath,
+    required super.pubCacheBase,
+  }) : memberRoot = p.join(workspaceRoot, memberRelativePath),
+       super(projectRoot: workspaceRoot) {
+    memberPubspec = PubspecYaml(fs.file(p.join(memberRoot, 'pubspec.yaml')));
+  }
+
   /// The absolute path of the workspace member directory, derived from
   /// `workspaceRoot + memberRelativePath`.
   final String memberRoot;
@@ -197,16 +243,6 @@ class WorkspaceTestEnvironment extends TestEnvironment {
   late final PubspecYaml memberPubspec;
 
   final String memberRelativePath;
-
-  WorkspaceTestEnvironment({
-    required String workspaceRoot,
-    required this.memberRelativePath,
-    required super.pubCacheBase,
-    super.logger,
-  }) : memberRoot = p.join(workspaceRoot, memberRelativePath),
-       super(projectRoot: workspaceRoot) {
-    memberPubspec = PubspecYaml(fs.file(p.join(memberRoot, 'pubspec.yaml')));
-  }
 
   @override
   void setUp() {
