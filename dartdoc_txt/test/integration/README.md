@@ -29,12 +29,17 @@ git submodule update --init
 
 ## Updating golden files
 
-To regenerate all golden files after changing the renderer or fixtures:
+To regenerate golden files after changing the renderer or fixtures, run the CLI
+on each fixture:
 
 ```sh
 cd dartdoc_txt
-fvm dart run test/integration/update_golden.dart
-```
 
-This will initialize the submodule (if needed), run `pub get` in the path
-fixture, render both fixtures, and overwrite the `golden/` directory.
+# basic fixture
+fvm dart run bin/dartdoc_txt.dart -i test/integration/fixture/basic -o test/integration/golden/basic
+
+# path fixture (requires submodule init + pub get first)
+git submodule update --init
+(cd test/integration/fixture/dart-core/pkgs/path && fvm dart pub get)
+fvm dart run bin/dartdoc_txt.dart -i test/integration/fixture/dart-core/pkgs/path -o test/integration/golden/path
+```

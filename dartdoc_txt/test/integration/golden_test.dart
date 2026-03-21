@@ -36,7 +36,7 @@ void main() {
 
     test('generated files match golden files', () {
       for (var entry in generatedFiles.entries) {
-        var goldenFile = File(p.join(goldensDir, '${entry.key}.expect'));
+        var goldenFile = File(p.join(goldensDir, entry.key));
         expect(
           goldenFile.existsSync(),
           isTrue,
@@ -57,7 +57,7 @@ void main() {
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
       var expectedGoldens =
-          generatedFiles.keys.map((k) => '$k.expect').toSet();
+          generatedFiles.keys.toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });
@@ -87,7 +87,7 @@ void main() {
         throw StateError(
           'dart-core submodule not initialized.\n'
           'Run: git submodule update --init\n'
-          'Or:  fvm dart run test/integration/update_golden.dart',
+          'Or see test/integration/README.md for setup instructions.',
         );
       }
 
@@ -120,7 +120,7 @@ void main() {
 
     test('generated files match golden files', () {
       for (var entry in generatedFiles.entries) {
-        var goldenFile = File(p.join(goldensDir, '${entry.key}.expect'));
+        var goldenFile = File(p.join(goldensDir, entry.key));
         expect(
           goldenFile.existsSync(),
           isTrue,
@@ -141,7 +141,7 @@ void main() {
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
       var expectedGoldens =
-          generatedFiles.keys.map((k) => '$k.expect').toSet();
+          generatedFiles.keys.toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });
