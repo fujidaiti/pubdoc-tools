@@ -24,7 +24,7 @@ int add(int a, int b) => a + b;
 capitalize(String input) → String
 ```
 
-Source: lib/src/functions.dart:29:32
+Source: lib/src/functions.dart:28:31
 
 Capitalizes [input].
 
