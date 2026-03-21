@@ -10,10 +10,8 @@ class MarkdownRenderer {
   final PackageGraph packageGraph;
   final RenderOptions _options;
 
-  MarkdownRenderer({
-    required this.packageGraph,
-    required RenderOptions options,
-  }) : _options = options;
+  MarkdownRenderer({required this.packageGraph, required RenderOptions options})
+    : _options = options;
 
   DocDir render() {
     var templates = Templates.load();
@@ -30,7 +28,10 @@ class MarkdownRenderer {
     // INDEX
     root.children.add(
       IndexPage(
-        package, libraries, templates, _librarySectionData,
+        package,
+        libraries,
+        templates,
+        _librarySectionData,
         fileExtension: _options.fileExtension,
       ),
     );

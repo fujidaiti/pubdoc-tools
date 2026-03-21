@@ -7,7 +7,8 @@ Future<void> main() async {
   final integrationDir = p.dirname(Platform.script.toFilePath());
   final fixtureDir = p.join(integrationDir, 'fixture');
   final goldenDir = p.join(integrationDir, 'golden');
-  final pathPkgDir = p.join(fixtureDir, 'dart-core', 'pkgs', 'path');
+  final submoduleDir = p.join(fixtureDir, 'dart-core');
+  final pathPkgDir = p.join(submoduleDir, 'pkgs', 'path');
   final pathGoldenDir = p.join(goldenDir, 'path');
   final basicGoldenDir = p.join(goldenDir, 'basic');
   final basicFixtureDir = p.join(fixtureDir, 'basic');
@@ -22,6 +23,7 @@ Future<void> main() async {
     ),
   );
 
+  _cleanDir(submoduleDir);
   await _initGitSubmodule();
   await _pubGet(pathPkgDir);
   _cleanDir(pathGoldenDir);

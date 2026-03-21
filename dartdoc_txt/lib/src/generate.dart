@@ -13,11 +13,14 @@ Future<void> generateDocs({
   required String outputDir,
   required RenderOptions options,
 }) async {
+  final docTree = await buildDocs(options);
+  writeDocTree(docTree, outputDir);
+}
+
+Future<DocDir> buildDocs(RenderOptions options) async {
   final config = parseOptions(pubPackageMetaProvider, [
     '--input',
     options.packageRoot,
-    '--output',
-    outputDir,
     '--no-show-progress',
     '--quiet',
   ]);
@@ -28,10 +31,8 @@ Future<void> generateDocs({
   final packageBuilder = PubPackageBuilder(config, pubPackageMetaProvider);
   final packageGraph = await packageBuilder.buildPackageGraph();
 
-  final renderer = MarkdownRenderer(
+  return MarkdownRenderer(
     packageGraph: packageGraph,
     options: options,
-  );
-  final docTree = renderer.render();
-  writeDocTree(docTree, outputDir);
+  ).render();
 }

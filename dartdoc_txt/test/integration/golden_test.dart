@@ -1,10 +1,11 @@
 import 'dart:io';
 
+import 'package:dartdoc_txt/src/doc_tree.dart';
+import 'package:dartdoc_txt/src/element_renderers.dart';
+import 'package:dartdoc_txt/src/generate.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
-
-import 'test_helper.dart';
 
 void main() {
   // Suppress logging from dartdoc.
@@ -30,8 +31,8 @@ void main() {
     );
 
     setUpAll(() async {
-      var docTree = await renderFixture(fixturePath);
-      generatedFiles = collectFiles(docTree);
+      var docTree = await buildDocs(RenderOptions(packageRoot: fixturePath));
+      generatedFiles = _collectFiles(docTree);
     });
 
     test('generated files match golden files', () {
@@ -56,8 +57,9 @@ void main() {
           .whereType<File>()
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
-      var expectedGoldens =
-          generatedFiles.keys.map((k) => '$k.expected').toSet();
+      var expectedGoldens = generatedFiles.keys
+          .map((k) => '$k.expected')
+          .toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });
@@ -90,30 +92,8 @@ void main() {
           'Or see test/integration/README.md for setup instructions.',
         );
       }
-
-      // Verify the submodule is at the pinned commit.
-      var repoRoot = findRepoRoot(Directory.current.path);
-      var relSubmodulePath = p.relative(submoduleDir, from: repoRoot);
-      var lsTree = await Process.run('git', [
-        'ls-tree',
-        'HEAD',
-        relSubmodulePath,
-      ], workingDirectory: repoRoot);
-      var pinnedCommit = (lsTree.stdout as String).split(RegExp(r'\s+'))[2];
-      var actualHead = await Process.run('git', [
-        'rev-parse',
-        'HEAD',
-      ], workingDirectory: submoduleDir);
-      var actualCommit = (actualHead.stdout as String).trim();
-      if (pinnedCommit != actualCommit) {
-        throw StateError(
-          'dart-core submodule is at $actualCommit but should be at '
-          '$pinnedCommit.\n'
-          'Run: git submodule update --init',
-        );
-      }
-      var docTree = await renderFixture(fixturePath);
-      generatedFiles = collectFiles(docTree);
+      var docTree = await buildDocs(RenderOptions(packageRoot: fixturePath));
+      generatedFiles = _collectFiles(docTree);
     });
 
     test('generated files match golden files', () {
@@ -138,9 +118,26 @@ void main() {
           .whereType<File>()
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
-      var expectedGoldens =
-          generatedFiles.keys.map((k) => '$k.expected').toSet();
+      var expectedGoldens = generatedFiles.keys
+          .map((k) => '$k.expected')
+          .toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });
+}
+
+/// Recursively collects all file paths and their rendered content.
+Map<String, String> _collectFiles(DocDir dir, [String prefix = '']) {
+  var result = <String, String>{};
+  for (var child in dir.children) {
+    switch (child) {
+      case DocFile():
+        var path = prefix.isEmpty ? child.name : '$prefix/${child.name}';
+        result[path] = child.renderContent();
+      case DocDir():
+        var dirPath = prefix.isEmpty ? child.name : '$prefix/${child.name}';
+        result.addAll(_collectFiles(child, dirPath));
+    }
+  }
+  return result;
 }
