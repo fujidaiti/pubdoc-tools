@@ -1,4 +1,8 @@
+// dartdoc does not re-export these from its public API.
+// ignore: implementation_imports
 import 'package:dartdoc/src/element_type.dart';
+// dartdoc does not re-export these from its public API.
+// ignore: implementation_imports
 import 'package:dartdoc/src/model/model.dart';
 
 import 'package:dartdoc_txt/src/utilities.dart';
@@ -75,16 +79,18 @@ String renderDeclaration(Container container) {
     // Interfaces
     if (container.publicInterfaces.isNotEmpty) {
       buffer.write(
-        '\n    implements ${container.publicInterfaces.map(plainTypeName).join(', ')}',
+        '\n    implements '
+        '${container.publicInterfaces.map(plainTypeName).join(', ')}',
       );
     }
   }
 
   // Mixin: show superclass constraints
   if (container is Mixin && container.publicSuperclassConstraints.isNotEmpty) {
-    buffer.write(
-      ' on ${container.publicSuperclassConstraints.map(plainTypeName).join(', ')}',
-    );
+    final constraints = container.publicSuperclassConstraints
+        .map(plainTypeName)
+        .join(', ');
+    buffer.write(' on $constraints');
   }
 
   // Extension: show extended type
@@ -102,7 +108,9 @@ String renderSignature(ModelElement element) {
   if (element is Constructor) {
     buffer.write(element.name);
     buffer.write('(${_renderParams(element.parameters)})');
-    if (element.isConst) buffer.write(' const');
+    if (element.isConst) {
+      buffer.write(' const');
+    }
     if (element.isFactory) {
       final enclosingName = element.enclosingElement.name;
       return '$enclosingName $buffer factory';
@@ -145,7 +153,9 @@ String _returnTypeName(ModelElement element) {
 }
 
 String _renderParams(List<Parameter> parameters) {
-  if (parameters.isEmpty) return '';
+  if (parameters.isEmpty) {
+    return '';
+  }
 
   final positionalRequired = parameters
       .where((p) => p.isRequiredPositional)
@@ -194,8 +204,14 @@ String _renderParam(Parameter p) {
 /// Excludes `@deprecated` (handled separately) and `@override` if requested.
 String renderAnnotations(ModelElement element, {bool skipOverride = false}) {
   final annotations = element.annotations
+      // Annotation.name has no public alternative in the dartdoc API.
+      // ignore: invalid_use_of_visible_for_overriding_member
       .where((a) => a.name != 'deprecated' && a.name != 'Deprecated')
+      // Annotation.name has no public alternative in the dartdoc API.
+      // ignore: invalid_use_of_visible_for_overriding_member
       .where((a) => !skipOverride || a.name != 'override')
+      // Annotation.name has no public alternative in the dartdoc API.
+      // ignore: invalid_use_of_visible_for_overriding_member
       .map((a) => '`@${a.name}`')
       .toList();
 
@@ -206,10 +222,18 @@ String renderAnnotations(ModelElement element, {bool skipOverride = false}) {
 String renderAttributes(Field field) {
   final badges = <String>[];
 
-  if (field.isStatic) badges.add('`static`');
-  if (field.isLate) badges.add('`late`');
-  if (field.isConst) badges.add('`const`');
-  if (field.isFinal) badges.add('`final`');
+  if (field.isStatic) {
+    badges.add('`static`');
+  }
+  if (field.isLate) {
+    badges.add('`late`');
+  }
+  if (field.isConst) {
+    badges.add('`const`');
+  }
+  if (field.isFinal) {
+    badges.add('`final`');
+  }
 
   // Add annotations (non-deprecated)
   final annotationStr = renderAnnotations(field);
@@ -224,10 +248,14 @@ String renderAttributes(Field field) {
 ///
 /// Returns empty string if the element is not deprecated.
 String renderDeprecation(ModelElement element) {
-  if (!element.isDeprecated) return '';
+  if (!element.isDeprecated) {
+    return '';
+  }
 
   // Try to extract the deprecation message from annotations
   for (final annotation in element.annotations) {
+    // Annotation.name has no public alternative in the dartdoc API.
+    // ignore: invalid_use_of_visible_for_overriding_member
     if (annotation.name == 'deprecated' || annotation.name == 'Deprecated') {
       final source = annotation.linkedNameWithParameters;
       // Extract message from @Deprecated('message')

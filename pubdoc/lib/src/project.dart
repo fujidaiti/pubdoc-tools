@@ -33,7 +33,7 @@ class ProjectContext {
       final YamlMap? pubspec;
       try {
         pubspec = loadYaml(pubspecFile.readAsStringSync()) as YamlMap?;
-      } catch (_) {
+      } on Exception catch (_) {
         return ProjectContext._(projectRoot, env: env, workspaceRoot: null);
       }
       if (pubspec != null && pubspec['resolution'] == 'workspace') {
@@ -48,18 +48,21 @@ class ProjectContext {
                 workspaceRoot = current;
                 break;
               }
-            } catch (_) {}
+            } on Exception catch (_) {}
           }
           final parent = p.dirname(current);
-          if (parent == current) break;
+          if (parent == current) {
+            break;
+          }
           current = parent;
         }
         if (workspaceRoot == null) {
-          // Found `resolution: workspace` but no workspace root — invalid repository structure.
+          // Found `resolution: workspace` but no workspace root —
+          // invalid repository structure.
           throw PubdocException(
             'pubspec.yaml in $projectRoot declares `resolution: workspace`, '
-            'but no workspace root (pubspec.yaml with `workspace:` key) was found '
-            'in the parent directories.',
+            'but no workspace root (pubspec.yaml with `workspace:` key)'
+            ' was found in the parent directories.',
           );
         }
       }

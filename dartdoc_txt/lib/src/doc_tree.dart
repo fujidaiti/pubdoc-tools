@@ -32,7 +32,9 @@ class DocDir extends DocNode {
           .whereType<DocDir>()
           .where((d) => d.name == parts[i])
           .firstOrNull;
-      if (next == null) return null;
+      if (next == null) {
+        return null;
+      }
       current = next;
     }
     return current.children
@@ -50,7 +52,9 @@ class DocDir extends DocNode {
           .whereType<DocDir>()
           .where((d) => d.name == part)
           .firstOrNull;
-      if (next == null) return null;
+      if (next == null) {
+        return null;
+      }
       current = next;
     }
     return current;

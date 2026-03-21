@@ -1,3 +1,5 @@
+// dartdoc does not re-export model classes from its public API.
+// ignore: implementation_imports
 import 'package:dartdoc/src/model/model.dart';
 import 'package:dartdoc_txt/src/doc_tree.dart';
 import 'package:dartdoc_txt/src/signature_builder.dart';
@@ -45,7 +47,9 @@ String renderTopLevelFunctions(
   Templates templates,
 ) {
   final functions = library.functions.where((f) => f.isPublic).toList();
-  if (functions.isEmpty) return '';
+  if (functions.isEmpty) {
+    return '';
+  }
 
   final data = {
     'libraryName': library.name,
@@ -77,7 +81,9 @@ String renderTopLevelProperties(
 ) {
   final properties = library.properties.where((p) => p.isPublic).toList();
   final constants = library.constants.where((c) => c.isPublic).toList();
-  if (properties.isEmpty && constants.isEmpty) return '';
+  if (properties.isEmpty && constants.isEmpty) {
+    return '';
+  }
 
   final data = {
     'libraryName': library.name,
@@ -117,7 +123,9 @@ String renderTypedefs(
   Templates templates,
 ) {
   final typedefs = library.typedefs.where((t) => t.isPublic).toList();
-  if (typedefs.isEmpty) return '';
+  if (typedefs.isEmpty) {
+    return '';
+  }
 
   final data = {
     'libraryName': library.name,
@@ -197,7 +205,8 @@ String renderCategory(Category category, Templates templates) {
   return templates['category'].renderString(data);
 }
 
-/// Returns the raw source code for an element, bypassing dartdoc's HTML escaping.
+/// Returns the raw source code for an element, bypassing dartdoc's HTML
+/// escaping.
 String _rawSourceCode(ModelElement element) {
   return element.modelNode?.sourceCode ?? '';
 }
@@ -205,7 +214,9 @@ String _rawSourceCode(ModelElement element) {
 // --- Private helpers ---
 
 String _cleanDoc(String? documentation) {
-  if (documentation == null || documentation.isEmpty) return '';
+  if (documentation == null || documentation.isEmpty) {
+    return '';
+  }
   return stripResidualHtml(documentation);
 }
 
@@ -384,7 +395,8 @@ Map<String, dynamic> _operatorData(
   };
 }
 
-/// Computes source location data (relative path + line number range) for an element.
+/// Computes source location data (relative path + line number range) for an
+/// element.
 Map<String, dynamic> _sourceLocationData(
   ModelElement element,
   String packageRoot,
@@ -409,7 +421,9 @@ Map<String, dynamic> _sourceData(
   RenderOptions options,
 ) {
   final source = _rawSourceCode(element);
-  if (source.isEmpty) return _noSourceData();
+  if (source.isEmpty) {
+    return _noSourceData();
+  }
 
   final lineCount = sourceLineCount(source);
   if (lineCount <= options.sourceLineThreshold) {
@@ -433,11 +447,19 @@ Map<String, dynamic> _noSourceData() {
 
 /// Returns true if a detail page is needed for this element.
 bool needsDetailPage(ModelElement element, RenderOptions options) {
-  if (!options.includeSource) return false;
-  if (element is Method && element.element.isAbstract) return false;
-  if (element is Operator && element.element.isAbstract) return false;
+  if (!options.includeSource) {
+    return false;
+  }
+  if (element is Method && element.element.isAbstract) {
+    return false;
+  }
+  if (element is Operator && element.element.isAbstract) {
+    return false;
+  }
   final source = _rawSourceCode(element);
-  if (source.isEmpty) return false;
+  if (source.isEmpty) {
+    return false;
+  }
   return sourceLineCount(source) > options.sourceLineThreshold;
 }
 
@@ -448,7 +470,9 @@ void _addCategorySection(
   Category category,
 ) {
   final publicElements = elements.where((e) => e.isPublic).toList();
-  if (publicElements.isEmpty) return;
+  if (publicElements.isEmpty) {
+    return;
+  }
 
   sections.add({
     'heading': heading,
@@ -540,7 +564,7 @@ class ContainerPage extends DocFile {
 /// Detail page for members with large source.
 class DetailPage extends DocFile {
   DetailPage(
-    super.fileName,
+    super.name,
     this.element,
     this.parentName,
     this.options,

@@ -1,3 +1,5 @@
+// dartdoc does not re-export model classes from its public API.
+// ignore: implementation_imports
 import 'package:dartdoc/src/model/model.dart';
 
 import 'package:dartdoc_txt/src/doc_tree.dart';
@@ -151,7 +153,9 @@ class MarkdownRenderer {
     String libDir,
     String libraryName,
   ) {
-    if (elements.isEmpty) return;
+    if (elements.isEmpty) {
+      return;
+    }
 
     lists.add({
       'heading': heading,
@@ -240,7 +244,9 @@ class MarkdownRenderer {
         if (needsDetailPage(ctor, _options)) {
           containerDir.children.add(
             DetailPage(
-              '${container.name}-${ctorBaseName(ctor.name, container.name)}.${_options.fileExtension}',
+              '${container.name}'
+              '-${ctorBaseName(ctor.name, container.name)}'
+              '.${_options.fileExtension}',
               ctor,
               container.name,
               _options,
@@ -258,7 +264,9 @@ class MarkdownRenderer {
       if (needsDetailPage(method, _options)) {
         containerDir.children.add(
           DetailPage(
-            '${container.name}-${safeFileName(method.name)}.${_options.fileExtension}',
+            '${container.name}'
+            '-${safeFileName(method.name)}'
+            '.${_options.fileExtension}',
             method,
             container.name,
             _options,
@@ -271,7 +279,9 @@ class MarkdownRenderer {
       if (needsDetailPage(method, _options)) {
         containerDir.children.add(
           DetailPage(
-            '${container.name}-${safeFileName(method.name)}.${_options.fileExtension}',
+            '${container.name}'
+            '-${safeFileName(method.name)}'
+            '.${_options.fileExtension}',
             method,
             container.name,
             _options,

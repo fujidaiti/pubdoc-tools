@@ -35,7 +35,9 @@ class PubspecYaml {
   void write() {
     _file.parent.createSync(recursive: true);
     final buf = StringBuffer();
-    if (resolution != null) buf.writeln('resolution: $resolution');
+    if (resolution != null) {
+      buf.writeln('resolution: $resolution');
+    }
     if (workspace.isNotEmpty) {
       buf.writeln('workspace:');
       for (final m in workspace) {
@@ -217,8 +219,9 @@ class TestEnvironment implements Environment {
 
 /// A [TestEnvironment] configured for a pub workspace scenario.
 ///
-/// The workspace root pubspec.yaml lists [memberRelativePath] under `workspace:`,
-/// and the member pubspec.yaml at [memberRoot] declares `resolution: workspace`.
+/// The workspace root pubspec.yaml lists [memberRelativePath] under
+/// `workspace:`, and the member pubspec.yaml at [memberRoot] declares
+/// `resolution: workspace`.
 /// Lock and config files are created under [projectRoot] (the workspace root),
 /// matching real pub workspace behavior. Use [memberRoot] as the `projectRoot`
 /// when constructing a [ProjectContext] to exercise workspace detection.

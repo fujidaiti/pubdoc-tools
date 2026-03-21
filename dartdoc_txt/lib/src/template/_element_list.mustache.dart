@@ -1,4 +1,5 @@
-/// Mustache partial template for an element list (classes, enums, etc.) within a library section.
+/// Mustache partial template for an element list (classes, enums, etc.)
+/// within a library section.
 const elementListTemplate = '''
 ### {{{heading}}} from {{{libraryName}}}
 

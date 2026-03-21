@@ -38,7 +38,8 @@ class _PubdocRunner extends CommandRunner<int> {
         valueHelp: 'indent',
         help:
             'Output results in JSON format. '
-            'Value is the indent level (e.g. --json=0 for minified, --json=2 for 2-space indent).',
+            'Value is the indent level '
+            '(e.g. --json=0 for minified, --json=2 for 2-space indent).',
       );
     addCommand(_GetCommand());
   }
@@ -48,7 +49,7 @@ class _PubdocRunner extends CommandRunner<int> {
   @override
   Future<int?> runCommand(ArgResults topLevelResults) async {
     if (topLevelResults.flag('version')) {
-      print('pubdoc version: ${PlatformEnvironment().toolVersion}');
+      stdout.writeln('pubdoc version: ${PlatformEnvironment().toolVersion}');
       return 0;
     }
 
@@ -123,7 +124,8 @@ class _GetCommand extends Command<int> {
           'loose-minor': 'Share docs across minor versions (e.g. 5.x).',
         },
         help:
-            'Strategy to resolve the documentation version from the package version.',
+            'Strategy to resolve the documentation version '
+            'from the package version.',
       );
   }
   @override
@@ -160,7 +162,7 @@ class _GetCommand extends Command<int> {
       ).run(packageNames: argResults!.rest);
 
       if (useJson) {
-        print(
+        stdout.writeln(
           _toJson({
             'output': result.toJson(),
             'errors': runner._errors,
@@ -168,12 +170,12 @@ class _GetCommand extends Command<int> {
           }, jsonIndent),
         );
       } else {
-        print(result.format());
+        stdout.writeln(result.format());
       }
       return 0;
     } on PubdocException catch (e) {
       if (useJson) {
-        print(
+        stdout.writeln(
           _toJson({
             'output': null,
             'errors': [...runner._errors, e.message],

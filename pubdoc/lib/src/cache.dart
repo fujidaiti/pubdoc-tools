@@ -62,7 +62,9 @@ class CacheMetadata {
 
   static CacheMetadata? read(String cacheDir, {required FileSystem fs}) {
     final file = fs.file(p.join(cacheDir, 'metadata.json'));
-    if (!file.existsSync()) return null;
+    if (!file.existsSync()) {
+      return null;
+    }
     final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
     return CacheMetadata.fromJson(json);
   }

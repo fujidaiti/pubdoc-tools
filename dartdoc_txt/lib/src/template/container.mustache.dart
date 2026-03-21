@@ -1,4 +1,5 @@
-/// Mustache template for class, enum, mixin, extension, and extension type pages.
+/// Mustache template for class, enum, mixin, extension, and extension type
+/// pages.
 const containerTemplate = '''
 # {{{name}}}
 

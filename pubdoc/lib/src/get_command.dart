@@ -45,7 +45,8 @@ class PackageGetResult {
   /// The resolved documentation version string (e.g. `5.3.x`).
   final String version;
 
-  /// Whether documentation was served from cache, generated fresh, or refreshed.
+  /// Whether documentation was served from cache, generated fresh, or
+  /// refreshed.
   final CacheStatus cacheStatus;
 
   Map<String, dynamic> toJson() => {
@@ -70,7 +71,7 @@ class GetResult {
   /// Returns a human-readable summary suitable for printing to stdout.
   ///
   /// Each package is rendered as:
-  /// ```
+  /// ```text
   /// <packageName>
   ///   documentation: <path>
   ///   source:        <path>
@@ -81,7 +82,9 @@ class GetResult {
     final buffer = StringBuffer();
     var first = true;
     for (final entry in packages.entries) {
-      if (!first) buffer.write('\n');
+      if (!first) {
+        buffer.write('\n');
+      }
       first = false;
       final r = entry.value;
       buffer.write('${entry.key}\n');
@@ -145,9 +148,13 @@ Map<String, dynamic> buildPackageConfigFor({
   final queue = [package];
   while (queue.isNotEmpty) {
     final current = queue.removeAt(0);
-    if (!visited.add(current)) continue;
+    if (!visited.add(current)) {
+      continue;
+    }
     final deps = graph[current];
-    if (deps != null) queue.addAll(deps);
+    if (deps != null) {
+      queue.addAll(deps);
+    }
   }
 
   // Filter package_config packages to only those in the transitive closure.
