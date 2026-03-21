@@ -56,8 +56,7 @@ void main() {
           .whereType<File>()
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
-      var expectedGoldens =
-          generatedFiles.keys.toSet();
+      var expectedGoldens = generatedFiles.keys.toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });
@@ -94,18 +93,16 @@ void main() {
       // Verify the submodule is at the pinned commit.
       var repoRoot = findRepoRoot(Directory.current.path);
       var relSubmodulePath = p.relative(submoduleDir, from: repoRoot);
-      var lsTree = await Process.run(
-        'git',
-        ['ls-tree', 'HEAD', relSubmodulePath],
-        workingDirectory: repoRoot,
-      );
-      var pinnedCommit =
-          (lsTree.stdout as String).split(RegExp(r'\s+'))[2];
-      var actualHead = await Process.run(
-        'git',
-        ['rev-parse', 'HEAD'],
-        workingDirectory: submoduleDir,
-      );
+      var lsTree = await Process.run('git', [
+        'ls-tree',
+        'HEAD',
+        relSubmodulePath,
+      ], workingDirectory: repoRoot);
+      var pinnedCommit = (lsTree.stdout as String).split(RegExp(r'\s+'))[2];
+      var actualHead = await Process.run('git', [
+        'rev-parse',
+        'HEAD',
+      ], workingDirectory: submoduleDir);
       var actualCommit = (actualHead.stdout as String).trim();
       if (pinnedCommit != actualCommit) {
         throw StateError(
@@ -140,8 +137,7 @@ void main() {
           .whereType<File>()
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
-      var expectedGoldens =
-          generatedFiles.keys.toSet();
+      var expectedGoldens = generatedFiles.keys.toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });

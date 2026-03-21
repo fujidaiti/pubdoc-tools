@@ -3,4 +3,4 @@ include: package:lints/recommended.yaml
 analyzer:
   exclude:
     # Exclude git-submodule
-    - test/integration/fixture/dart-core/
+    - test/integration/fixture/dart-core/**
