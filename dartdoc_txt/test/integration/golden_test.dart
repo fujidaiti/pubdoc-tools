@@ -36,7 +36,7 @@ void main() {
 
     test('generated files match golden files', () {
       for (var entry in generatedFiles.entries) {
-        var goldenFile = File(p.join(goldensDir, entry.key));
+        var goldenFile = File(p.join(goldensDir, '${entry.key}.expected'));
         expect(
           goldenFile.existsSync(),
           isTrue,
@@ -56,7 +56,8 @@ void main() {
           .whereType<File>()
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
-      var expectedGoldens = generatedFiles.keys.toSet();
+      var expectedGoldens =
+          generatedFiles.keys.map((k) => '$k.expected').toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });
@@ -117,7 +118,7 @@ void main() {
 
     test('generated files match golden files', () {
       for (var entry in generatedFiles.entries) {
-        var goldenFile = File(p.join(goldensDir, entry.key));
+        var goldenFile = File(p.join(goldensDir, '${entry.key}.expected'));
         expect(
           goldenFile.existsSync(),
           isTrue,
@@ -137,7 +138,8 @@ void main() {
           .whereType<File>()
           .map((f) => p.relative(f.path, from: goldensDir))
           .toSet();
-      var expectedGoldens = generatedFiles.keys.toSet();
+      var expectedGoldens =
+          generatedFiles.keys.map((k) => '$k.expected').toSet();
       expect(goldenFiles, equals(expectedGoldens));
     });
   });

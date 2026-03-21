@@ -29,9 +29,11 @@ Future<DocDir> renderFixture(
   var packageGraph = await buildFixtureGraph(fixturePath);
   var renderer = MarkdownRenderer(
     packageGraph: packageGraph,
-    sourceLineThreshold: sourceThreshold,
-    includeSource: includeSource,
-    packageRoot: fixturePath,
+    options: RenderOptions(
+      packageRoot: fixturePath,
+      sourceLineThreshold: sourceThreshold,
+      includeSource: includeSource,
+    ),
   );
   return renderer.render();
 }

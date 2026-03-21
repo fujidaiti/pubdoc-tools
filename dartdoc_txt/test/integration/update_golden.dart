@@ -14,12 +14,24 @@ Future<void> main() async {
 
   await _pubGet(basicFixtureDir);
   _cleanDir(basicGoldenDir);
-  await generateDocs(inputDir: basicFixtureDir, outputDir: basicGoldenDir);
+  await generateDocs(
+    outputDir: basicGoldenDir,
+    options: RenderOptions(
+      packageRoot: basicFixtureDir,
+      fileExtension: 'md.expected',
+    ),
+  );
 
   await _initGitSubmodule();
   await _pubGet(pathPkgDir);
   _cleanDir(pathGoldenDir);
-  await generateDocs(inputDir: pathPkgDir, outputDir: pathGoldenDir);
+  await generateDocs(
+    outputDir: pathGoldenDir,
+    options: RenderOptions(
+      packageRoot: pathPkgDir,
+      fileExtension: 'md.expected',
+    ),
+  );
 }
 
 void _cleanDir(String path) {
