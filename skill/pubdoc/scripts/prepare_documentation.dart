@@ -60,9 +60,8 @@ void main(List<String> args) async {
     _exitWithError('No package names provided');
   }
 
-  final dartExecutable = Platform.resolvedExecutable;
-
   try {
+    final dartExecutable = Platform.resolvedExecutable;
     await Process.run(dartExecutable, [
       'pub',
       'get',
@@ -73,9 +72,7 @@ void main(List<String> args) async {
 
   final ProcessResult result;
   try {
-    result = await Process.run(dartExecutable, [
-      'run',
-      'pubdoc',
+    result = await Process.run('pubdoc', [
       'get',
       '--json=0',
       '--quiet',
