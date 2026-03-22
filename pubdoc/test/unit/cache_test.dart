@@ -17,6 +17,9 @@ class _TestEnvironment implements Environment {
 
   @override
   String? getVariable(String name) => null;
+
+  @override
+  String? get sdkDir => null;
 }
 
 void main() {

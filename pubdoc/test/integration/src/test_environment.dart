@@ -162,6 +162,9 @@ class TestEnvironment implements Environment {
   final MemoryFileSystem fs;
 
   @override
+  String? get sdkDir => null;
+
+  @override
   String? getVariable(String name) => _variables[name];
 
   @override

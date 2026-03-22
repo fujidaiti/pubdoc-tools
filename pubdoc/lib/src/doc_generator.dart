@@ -22,7 +22,7 @@ class DocGenerator {
     log.fine('Analyzing package at $sourcePath...');
     await generateDocs(
       outputDir: outputDir,
-      options: RenderOptions(packageRoot: sourcePath),
+      options: RenderOptions(packageRoot: sourcePath, sdkDir: env.sdkDir),
     );
   }
 }
