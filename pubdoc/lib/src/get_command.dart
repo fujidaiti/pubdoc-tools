@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:file/file.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
-
 import 'package:pubdoc/src/cache.dart';
 import 'package:pubdoc/src/config.dart';
 import 'package:pubdoc/src/doc_generator.dart';
@@ -318,9 +317,8 @@ class GetCommand {
         ? Uri.parse(cacheResult.metadata!.source).toFilePath()
         : sourceDir.path;
 
-    final linkPath = '${project.pubdocDir.path}/$packageName';
     return PackageGetResult(
-      documentation: linkPath,
+      documentation: cacheResult.cacheDir,
       source: sourcePath,
       version: docVersion,
       cacheStatus: switch (cacheResult.action) {
