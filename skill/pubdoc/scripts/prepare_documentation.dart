@@ -3,10 +3,11 @@ import 'dart:io';
 
 /// Prepares documentation for the given package names by:
 ///
-/// 1. Running `pubdoc get` to generate documentation (if needed).
-/// 2. Checking each package for a missing `OVERVIEW.md` to determine whether
+/// 1. Running `dart pub get` to ensure dependencies are up-to-date.
+/// 2. Running `pubdoc get` to generate documentation (if needed).
+/// 3. Checking each package for a missing `OVERVIEW.md` to determine whether
 ///    enrichment is needed.
-/// 3. If enrichment is needed, cleaning stale `example/` and `EXAMPLES.md`
+/// 4. If enrichment is needed, cleaning stale `example/` and `EXAMPLES.md`
 ///    from the documentation directory, then copying `example/` from the
 ///    package source so the enrichment agent can use it without needing the
 ///    source path.
@@ -48,7 +49,6 @@ void main(List<String> args) async {
     if (args[i] == '--project') {
       if (i + 1 >= args.length) {
         _exitWithError('--project requires a path argument');
-        return;
       }
       projectPath = args[++i];
     } else {
@@ -58,24 +58,37 @@ void main(List<String> args) async {
 
   if (packages.isEmpty) {
     _exitWithError('No package names provided');
-    return;
   }
 
   final dartExecutable = Platform.resolvedExecutable;
-  final result = await Process.run(dartExecutable, [
-    'run',
-    'pubdoc',
-    'get',
-    '--json=0',
-    '--quiet',
-    if (projectPath != null) ...['--project', projectPath],
-    ...packages,
-  ]);
+
+  try {
+    await Process.run(dartExecutable, [
+      'pub',
+      'get',
+    ], workingDirectory: projectPath);
+  } on ProcessException catch (e) {
+    _exitWithError('Failed to run "dart pub get": $e');
+  }
+
+  final ProcessResult result;
+  try {
+    result = await Process.run(dartExecutable, [
+      'run',
+      'pubdoc',
+      'get',
+      '--json=0',
+      '--quiet',
+      if (projectPath != null) ...['--project', projectPath],
+      ...packages,
+    ]);
+  } on ProcessException catch (e) {
+    _exitWithError('Failed to run "pubdoc get": $e');
+  }
 
   if (result.exitCode != 0) {
     final stderr = (result.stderr as String).trim();
     _exitWithError('pubdoc exited with code ${result.exitCode}: $stderr');
-    return;
   }
 
   // Parse JSON output
@@ -84,14 +97,12 @@ void main(List<String> args) async {
     pubdocJson = jsonDecode(result.stdout as String) as Map<String, dynamic>;
   } on FormatException catch (e) {
     _exitWithError('Failed to parse pubdoc JSON output: $e');
-    return;
   }
 
   // Check for errors in pubdoc output
   final errors = pubdocJson['errors'];
   if (errors is List && errors.isNotEmpty) {
     _exitWithError('pubdoc reported errors: ${errors.join(', ')}');
-    return;
   }
 
   final output = pubdocJson['output'] as Map<String, dynamic>?;
@@ -108,7 +119,6 @@ void main(List<String> args) async {
 
     if (documentation == null) {
       _exitWithError('Missing "documentation" for package $pkgName');
-      return;
     }
 
     final overviewFile = File('$documentation/OVERVIEW.md');
@@ -154,7 +164,7 @@ void main(List<String> args) async {
   stdout.writeln(jsonEncode({'packages': resultPackages, 'error': null}));
 }
 
-void _exitWithError(String message) {
+Never _exitWithError(String message) {
   stdout.writeln(
     jsonEncode({'packages': <String, dynamic>{}, 'error': message}),
   );
