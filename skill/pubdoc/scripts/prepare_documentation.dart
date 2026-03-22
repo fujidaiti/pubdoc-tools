@@ -3,7 +3,7 @@ import 'dart:io';
 
 /// Prepares documentation for the given package names by:
 ///
-/// 1. Running `pubdoc get` to generate documentation.
+/// 1. Running `pubdoc get` to generate documentation (if needed).
 /// 2. Checking each package for a missing `OVERVIEW.md` to determine whether
 ///    enrichment is needed.
 /// 3. If enrichment is needed, cleaning stale `example/` and `EXAMPLES.md`
