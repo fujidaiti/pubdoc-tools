@@ -5,8 +5,8 @@ package's `source` path and its `documentation` path.
 
 ## 1. Generate EXAMPLES.md
 
-Check if `<source>/example/` exists. If absent, skip — not all packages ship
-examples. Otherwise:
+Run `ls <source>/` and check whether an `example/` subdirectory is present. If
+absent, skip — not all packages ship examples. Otherwise:
 
 1. Copy examples into the documentation:
 
@@ -18,7 +18,6 @@ examples. Otherwise:
    `<documentation>/EXAMPLES.md` with this structure:
    - **Table of Contents** at the top — one line per example file, linked to its
      section heading. An agent can read just this section to orient quickly.
-
    - **One section per example file**, containing:
      - Short prose: what the example demonstrates and which key APIs or classes
        it uses
@@ -37,11 +36,12 @@ Gather source material:
 
 - **README:** read `<source>/README.md`. If absent, skip the summary section and
   proceed to the documentation guide below.
-- **Topics:** list `<documentation>/topics/` if it exists — note each `.md`
-  filename and read the first heading or first sentence to get a one-line
-  description.
-- **Libraries:** list the subdirectories in the documentation root that contain
-  an `index.md` file — these are the public library directories.
+- **Topics:** run `ls <documentation>/topics/` (or Glob `topics/*.md`) if the
+  directory exists — note each `.md` filename and read the first heading or
+  first sentence to get a one-line description.
+- **Libraries:** read `<documentation>/INDEX.md` — it lists all public
+  libraries. Do not read into library subdirectories; the library names from
+  INDEX.md are sufficient for the Documentation Guide.
 
 Write `<documentation>/OVERVIEW.md` with two sections:
 
