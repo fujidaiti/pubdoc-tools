@@ -34,7 +34,7 @@ class PackageGetResult {
     required this.cacheStatus,
   });
 
-  /// Absolute path to the symlink in the project's `.pubdoc/` directory.
+  /// Absolute path to the generated documentation directory in the cache.
   final String documentation;
 
   /// Absolute path to the package source directory that the documentation was
