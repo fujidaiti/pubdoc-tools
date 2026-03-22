@@ -68,7 +68,7 @@ Generate OVERVIEW.md and EXAMPLES.md for the package at:
 Read and follow ${CLAUDE_SKILL_DIR}/agents/doc-enrichment.md.
 ```
 
-If you cannot spawn a subagent, check each package for a missing `OVERV IEW.md`
+If you cannot spawn a subagent, check each package for a missing `OVERVIEW.md`
 and generate it yourself by following `agents/doc-enrichment.md`.
 
 ## Step 3: Explore documentation
