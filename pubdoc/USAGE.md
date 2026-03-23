@@ -92,6 +92,10 @@ Refer to [PRINCIPLE.md][1] to learn more about the inner workings of
   depends on (see [Version management][4] for more details). Default is
   `--cache`.
 
+- `--sdk-dir`: Path to the Dart SDK directory. Auto-detected from the running
+  Dart executable if not specified. Use this to override the detected path, for
+  example in CI environments with a custom SDK installation.
+
 [2]: https://dart.dev/tools/pub/workspaces
 [3]: PRINCIPLE.md#resolve-documentation-version
 [4]: PRINCIPLE.md#version-management
