@@ -291,9 +291,8 @@ class GetCommand {
           sdkDir: sdkDir,
         );
       } on Exception catch (e) {
-        throw PubdocException(
-          'Failed to generate documentation for $packageName: $e',
-        );
+        log.severe('An error occurred while processing $packageName:\n$e');
+        rethrow;
       } finally {
         if (tempDir.existsSync()) {
           tempDir.deleteSync(recursive: true);
