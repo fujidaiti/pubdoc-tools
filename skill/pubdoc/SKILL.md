@@ -9,7 +9,7 @@ Answers questions about Dart/Flutter packages by generating version-accurate doc
 
 ## Step 1: Prepare documentation
 
-Run a Dart script at `scripts/prepare_documentation.dart` to get the documentation locations for the packages you want to explore. Note that you must know the canonical package names. The script's usage is:
+Run a Dart script at `${CLAUDE_SKILL_DIR}/scripts/prepare_documentation.dart` to get the documentation locations for the packages you want to explore. Note that you must know the canonical package names. The script's usage is:
 
 ```
 prepare_documentation.dart --project </abs/path/to/dart/project/root> <package-name1> <package-name2> ...
@@ -29,22 +29,10 @@ Then, read the JSON output:
 }
 ```
 
-### Troubleshooting
+### Troubleshooting: pubdoc not installed
 
-#### pubdoc not found
-
-Install pubdoc as a global executable:
-
-```shell
-dart install pubdoc
-```
-
-**IMPORTANT**: Do not use `dart pub global activate`.
-
-#### Non-empty `errors` array
-
-When using `--json`, errors appear in the `errors` array of the JSON output rather than on stderr. Show the error messages to the user and stop.
-
+Install pubdoc as a global executable via `dart install pubdoc`.
+**IMPORTANT**: Do not use `dart pub global activate`. `dart install` is a newer alternative.
 
 ## Step 2: Enrich documentation (if needed)
 
