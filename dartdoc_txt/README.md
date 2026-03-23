@@ -1,55 +1,23 @@
 # dartdoc_txt
 
-A CLI tool that generates Markdown documentation from Dart/Flutter packages,
-optimized for LLM consumption.
+A Dart package that provides APIs to generate Markdown documentation from
+Dart/Flutter packages, optimized for LLM consumption.
 
 Unlike [dartdoc][] (which generates interactive HTML), dartdoc_txt reuses
 dartdoc's analysis engine but produces structured, grep-friendly Markdown files
 designed for language models to traverse and understand.
 
+See the [example][] for usage details.
+
 [dartdoc]: https://pub.dev/packages/dartdoc
-
-## Installation
-
-> [!NOTE]
->
-> Requires Dart SDK 3.10 or higher.
-
-Use [dart install][] to globally activate the tool:
-
-```shell
-dart install dartdoc_txt
-```
-
-Then, dartdoc_txt will be available as the `dartdox` command in your terminal.
-
-[dart install]: https://dart.dev/tools/dart-install
-
-## Usage
-
-Run `dart pub get` in the target package directory before running `dartdox`.
-Otherwise, types from dependency packages appear as `dynamic` in the generated
-documentation.
-
-```
-Usage: dartdox [options]
-
--i, --input (mandatory)      Input directory.
--o, --output (mandatory)     Output directory.
-    --source-threshold       Max lines of source to embed inline (default: 10).
-                             (defaults to "10")
-    --[no-]include-source    Include source code snippets.
-                             (defaults to on)
--h, --help                   Show usage information.
-    --version                Print the tool version.
-```
+[example]: bin/dartdoc_txt.dart
 
 ## Output Structure
 
 ```
 <output>/
-├── README.md                         # Package readme (if present)
-├── INDEX.md                          # Package overview + library & topic listing
+├── README.md                         # Copy of the package README (if present)
+├── INDEX.md                          # All libraries' public APIs
 ├── topics/
 │   └── getting-started.md            # Category pages (from dartdoc_options.yaml)
 └── <library>/

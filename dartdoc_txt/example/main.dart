@@ -1,0 +1,1 @@
+../bin/dartdoc_txt.dart
