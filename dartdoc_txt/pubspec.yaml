@@ -7,9 +7,6 @@ environment:
   sdk: ^3.10.0
 resolution: workspace
 
-executables:
-  dartdox: main
-
 dependencies:
   args: ^2.7.0
   dartdoc: ^9.0.2
