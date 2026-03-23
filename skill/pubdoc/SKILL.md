@@ -9,13 +9,13 @@ Answers questions about Dart/Flutter packages by generating version-accurate doc
 
 ## Step 1: Prepare documentation
 
-Run the prepare_documentation script:
+Run a Dart script at `scripts/prepare_documentation.dart` to get the documentation locations for the packages you want to explore. Note that you must know the canonical package names. The script's usage is:
 
-```shell
-dart ${CLAUDE_SKILL_DIR}/scripts/prepare_documentation.dart [--project <project-root>] <package-name1> <package-name2> ...
+```
+prepare_documentation.dart --project </abs/path/to/dart/project/root> <package-name1> <package-name2> ...
 ```
 
-Read the JSON output:
+Then, read the JSON output:
 
 ```json
 {
@@ -29,7 +29,22 @@ Read the JSON output:
 }
 ```
 
-If `error` is non-null, see the Troubleshooting section below.
+### Troubleshooting
+
+#### pubdoc not found
+
+Install pubdoc as a global executable:
+
+```shell
+dart install pubdoc
+```
+
+**IMPORTANT**: Do not use `dart pub global activate`.
+
+#### Non-empty `errors` array
+
+When using `--json`, errors appear in the `errors` array of the JSON output rather than on stderr. Show the error messages to the user and stop.
+
 
 ## Step 2: Enrich documentation (if needed)
 
@@ -38,8 +53,7 @@ If multiple packages need enrichment, spawn them in parallel and wait for all to
 
 - Model: fast, low-latency (e.g., Claude Haiku)
 - Permissions: allow to read/write files in `documentation` directory
-- Pass: the package's `documentation` path and the project root
-- Instructions: read and follow `${CLAUDE_SKILL_DIR}/agents/doc-enrichment.md`
+- Pass: the package's `documentation` path
 
 Always use this prompt template:
 
@@ -58,8 +72,7 @@ Spawn a subagent to delegate the exploration:
 
 - Model: fast, low-latency (e.g., Claude Haiku)
 - Permissions: read-only
-- Pass: the query, per-package `documentation` paths from step 1, and the project root
-- Instructions: read and follow `${CLAUDE_SKILL_DIR}/agents/doc-explorer.md`
+- Pass: the query, per-package `documentation` paths from step 1
 
 If you can use a built-in read-only agent optimized for searching and analyzing codebases (e.g., Explore agent), use it here. If you cannot spawn a subagent, read and follow `agents/doc-explorer.md` yourself.
 
@@ -79,19 +92,3 @@ Wait for the findings, then use them to proceed with your task.
 ## Note on documentation access
 
 Rely on the subagent's findings — do not read the documentation yourself unless the subagent's report is insufficient and further reading is clearly needed.
-
----
-
-## Troubleshooting
-
-### pubdoc not found
-
-Install pubdoc as a global executable:
-
-```shell
-dart install pubdoc
-```
-
-### Non-empty `errors` array
-
-When using `--json`, errors appear in the `errors` array of the JSON output rather than on stderr. Show the error messages to the user and stop.
