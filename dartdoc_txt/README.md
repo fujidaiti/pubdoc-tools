@@ -10,7 +10,7 @@ designed for language models to traverse and understand.
 See the [example][] for usage details.
 
 [dartdoc]: https://pub.dev/packages/dartdoc
-[example]: bin/dartdoc_txt.dart
+[example]: example/main.dart
 
 ## Output Structure
 

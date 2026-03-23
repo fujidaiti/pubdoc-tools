@@ -2,7 +2,7 @@
 
 ## WIP
 
-- Drop support for `dart install`.
+- Drop support for CLI command.
 
 ## 0.1.2
 
