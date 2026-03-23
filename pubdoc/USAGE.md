@@ -97,7 +97,7 @@ Refer to [PRINCIPLE.md][1] to learn more about the inner workings of
   specified. Use this to override the detected path, for example in CI
   environments with a custom SDK installation.
 
-  This is mandatory if running pubdoc as a standalone executable (e.g., when
+  This is mandatory when running pubdoc as a standalone executable (e.g., when
   installed globally via `dart install`), otherwise it exits with an error.
 
 [2]: https://dart.dev/tools/pub/workspaces
