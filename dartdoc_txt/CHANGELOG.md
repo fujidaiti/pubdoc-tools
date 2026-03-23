@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.1.3
+
+- Drop support for CLI command.
+- Add `sdkDir` to `RenderOptions`.
+
 ## 0.1.2
 
 - Support `dart install` for global activation.
