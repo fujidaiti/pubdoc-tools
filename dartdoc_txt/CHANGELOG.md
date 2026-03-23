@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## WIP
+
+- Drop support for CLI command.
+
 ## 0.1.2
 
 - Support `dart install` for global activation.
