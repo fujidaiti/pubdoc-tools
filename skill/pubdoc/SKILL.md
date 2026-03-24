@@ -1,6 +1,6 @@
 ---
 name: pubdoc
-description: Look up how a Dart/Flutter package works using version-accurate documentation generated from the project's actual dependencies. Use this skill whenever you need to understand a package API before writing code — don't rely on training knowledge, as APIs may have changed. This includes implementing features with a third-party package, debugging errors or stack traces involving one, looking up method signatures or class behavior, figuring out how to configure or integrate a package, or migrating/upgrading to a new version. If you're about to call into a package you're not 100% sure about, use this skill first.
+description: Look up the usage of Dart/Flutter packages reading version-accurate API documentation. Use this skill whenever you need to understand a package API — don't rely on training knowledge, as APIs may have changed. This includes implementing features with a third-party package, debugging errors or stack traces involving one, looking up method signatures or class behavior, figuring out how to configure or integrate a package, or migrating/upgrading to a new version. If you're about to call into a package you're not 100% sure about, use this skill first.
 ---
 
 # pubdoc
@@ -12,7 +12,7 @@ Answers questions about Dart/Flutter packages by generating version-accurate doc
 Run a Dart script at `${CLAUDE_SKILL_DIR}/scripts/prepare_documentation.dart` to get the documentation locations for the packages you want to explore. Note that you must know the canonical package names. The script's usage is:
 
 ```
-prepare_documentation.dart --project </abs/path/to/dart/project/root> <package-name1> <package-name2> ...
+prepare_documentation.dart --project </absolute/path/to/dart/project/root> <package-name1> <package-name2> ...
 ```
 
 Then, read the JSON output:
@@ -29,17 +29,27 @@ Then, read the JSON output:
 }
 ```
 
-### Troubleshooting: pubdoc not installed
+### Troubleshooting
+
+**IMPORTANT**: if you encounter an error during this step, check theese common issues first before trying to debug by yourself.
+
+#### pubdoc not installed
 
 Install pubdoc as a global executable via `dart install pubdoc`.
 **IMPORTANT**: Do not use `dart pub global activate`. `dart install` is a newer alternative.
 
-## Step 2: Enrich documentation (if needed)
+#### Package not found or name is incorrect
+
+Stop processing and ask the user for the canonical package name.
+
+## Step 2: Enrich documentation (if possible)
+
+**IMPORTANT**: this step requires write permission to the documentation cache directory. If you are in a read-only mode (e.g., in Plan mode), skip this step and proceed to step 3.
 
 For each package where `needsEnrichment == true`, spawn an enrichment subagent.
 If multiple packages need enrichment, spawn them in parallel and wait for all to finish before continuing.
 
-- Model: fast, low-latency (e.g., Claude Haiku)
+- Model: fast, low-latency
 - Permissions: allow to read/write files in `documentation` directory
 - Pass: the package's `documentation` path
 
@@ -58,7 +68,7 @@ If you cannot spawn a subagent, check each package for a missing `OVERVIEW.md` a
 
 Spawn a subagent to delegate the exploration:
 
-- Model: fast, low-latency (e.g., Claude Haiku)
+- Model: fast, low-latency
 - Permissions: read-only
 - Pass: the query, per-package `documentation` paths from step 1
 

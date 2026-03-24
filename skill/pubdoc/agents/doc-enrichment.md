@@ -119,7 +119,7 @@ Note that the detail pages are not always present - only for items that require 
 
 - "How do I do X?" — check EXAMPLES.md for usage patterns, then drill into the relevant class/method pages
 - "What does class/method Y do?" — go directly to the class or method page under `<library>/<ClassName>/<ClassName>.md`
-- "What API does the package expose?" — read INDEX.md for the full library listing
+- "What API does the package expose?" — INDEX.md is a good entry point for capturing the package overview
 - "Debug this error about Z" — look for the class/method mentioned in the error, check for topics/ that might cover common pitfalls or migration guides
 ````
 

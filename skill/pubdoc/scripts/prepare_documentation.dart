@@ -72,13 +72,29 @@ void main(List<String> args) async {
     _exitWithError('pubdoc is not installed or not on PATH.');
   }
 
+  final ProcessResult pubAddResult;
   try {
-    await Process.run(dartExecutable.path, [
+    pubAddResult = await Process.run(dartExecutable.path, [
       'pub',
-      'get',
+      'add',
+      ...packages,
     ], workingDirectory: projectPath);
-  } on ProcessException catch (e) {
-    _exitWithError('Failed to run "dart pub get": $e');
+  } on ProcessException catch (exception) {
+    _exitWithError('Failed to run "dart pub add": $exception');
+  }
+
+  if (pubAddResult.exitCode != 0) {
+    if (packages.length == 1) {
+      _exitWithError(
+        'The specified package ${packages.single} was not found in pub.dev, '
+        'or the package name is incorrect.',
+      );
+    } else {
+      _exitWithError(
+        'Some of the specified packages were not found in pub.dev, '
+        'or the package names are incorrect.',
+      );
+    }
   }
 
   final ProcessResult result;
@@ -93,11 +109,6 @@ void main(List<String> args) async {
     ]);
   } on ProcessException catch (e) {
     _exitWithError('Failed to run "pubdoc get": $e');
-  }
-
-  if (result.exitCode != 0) {
-    final stderr = (result.stderr as String).trim();
-    _exitWithError('pubdoc exited with code ${result.exitCode}: $stderr');
   }
 
   // Parse JSON output
