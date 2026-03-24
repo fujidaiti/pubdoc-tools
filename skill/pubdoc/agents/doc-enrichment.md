@@ -62,10 +62,10 @@ Then, write `<documentation>/OVERVIEW.md` using the template below. Follow these
   - Links to ecosystem/related repos that aren't about how to use this package
   - Background commentary ("The story behind this package…")
 
-Here's the template for OVERVIEW.md:
+Here's the template for OVERVIEW.md (replace `{{variable}}`s with actual content):
 
 ````markdown
-# <package-name>
+# {{package-name}}
 
 <!-- README content comes here -->
 
@@ -75,31 +75,25 @@ Use this guide to find what you need without exploring every file.
 
 ### Documentation structure
 
-<!-- Eliminate items from the structure overview if they don't exist -->
+Here's the structure of the documentation at {{documentation}}:
 
-```
-<documentation>/
-├── OVERVIEW.md # This file
-├── INDEX.md # Full API listing: all libraries, classes, functions
-├── EXAMPLES.md # Curated code examples with explanations
-├── example/ # Raw example code
-├── topics/ # Additional notes and guides on specific topics
-│   └── <TopicName>.md
-└── <library>/
-    ├── <ClassName>/
-    │   ├── <ClassName>.md # Class overview: constructors, fields, methods
-    │   └── <ClassName>-<methodName>.md # Detail page for a large method
-    ├── top-level-functions/
-    │   ├── top-level-functions.md # Top level functions overview
-    │   └── <functionName>.md # Detail page for a large function
-    ├── top-level-properties/
-    │   ├── top-level-properties.md # Top level properties overview
-    │   └── <topLevelProperty>.md # Detail page for a large property
-    └── typedefs/
-        ├── typedefs.md # Overview of typedefs in this library
-        └── <TypedefName>.md # Detail page for a large typedef
+<!-- Eliminate items if they don't exist -->
 
-```
+- `OVERVIEW.md`: this file.
+- `INDEX.md`: full API listing — all libraries, classes, and functions.
+- `EXAMPLES.md`: curated code examples with explanations.
+- `example/`: raw example source files.
+- `topics/<TopicName>.md`: additional notes and guides on specific topics.
+- `<library>/<ClassName>/<ClassName>.md`: class overview — constructors, fields, and methods.
+- `<library>/<ClassName>/<ClassName>-<methodName>.md`: detail page for a large method.
+- `<library>/top-level-functions/top-level-functions.md`: top-level functions overview.
+- `<library>/top-level-functions/<topLevelFunctionName>.md`: detail page for a large top-level function.
+- `<library>/top-level-properties/top-level-properties.md`: top-level properties overview.
+- `<library>/top-level-properties/<topLevelProperty>.md`: detail page for a large top-level property.
+- `<library>/typedefs/typedefs.md`: overview of typedefs in this library.
+- `<library>/typedefs/<TypedefName>.md`: detail page for a large typedef.
+
+Note that the detail pages are not always present - only for items that require more than a few sentences to explain. It is recommended to read the overview pages first such as `<ClassName>.md` or `top-level-functions.md` to get a sense of the API, then drill into detail pages as needed.
 
 ### Topics
 
