@@ -4,12 +4,12 @@ Write OVERVIEW.md and EXAMPLES.md for a package. You have been given the package
 
 ## Write EXAMPLES.md
 
-Run `test -d <documentation>/example/` to check whether an `example/` subdirectory is present. If absent, skip — not all packages ship examples.
-Otherwise:
-
-1. Explore the `<documentation>/example/` directory and write `<documentation>/EXAMPLES.md` following this template:
-
 Goal is that the reader of EXAMPLES.md should be able to identify the most relevant example and extract enough to write correct code, without opening the raw `.dart` files.
+
+First, run `test -d <documentation>/example/` to check whether an `example/` subdirectory is present. If absent, skip this section — not all packages ship examples. Otherwise, explore the `<documentation>/example/` directory and write `<documentation>/EXAMPLES.md`, following these guidelines:
+
+- Make it concise — this file is an overview and guide to the examples, not a place for full code listings.
+- Do not insert line breaks in the middle of a sentence just to make it look better visually.
 
 Use this template for EXAMPLES.md:
 
@@ -52,6 +52,7 @@ Gather source material:
 Then, write `<documentation>/OVERVIEW.md` using the template below. Follow these guidelines:
 
 - Make it concise without summarizing — all technical sections kept verbatim.
+- Do not insert line breaks in the middle of a sentence just to make it look better visually.
 - Prefer natural prose or bullet lists over cosmetic format such as tables and HTML.
 - **IMPORTANT**: strip anything that doesn't help a reader _use_ the package:
   - Badges/shields (`![badge]`, `[![...](...)`)
@@ -69,7 +70,7 @@ Use this template for OVERVIEW.md, replacing `{{variable}}`s with actual content
 
 ## Table of Contents
 
-<!-- Add a TOC of this document including sections both in the template and the original README. Add brief descriptions for each section. No internal link is needed. -->
+<!-- Add a TOC of this document including sections in the original README. Make sure to include sections in the template. Add brief descriptions for each section. No internal link is needed. -->
 
 ## Overview
 
