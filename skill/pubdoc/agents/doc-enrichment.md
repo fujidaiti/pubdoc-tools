@@ -1,6 +1,6 @@
 # Documentation enrichment
 
-Write OVERVIEW.md and EXAMPLES.md for a package. You have been given the package's `documentation` directory path.
+Write OVERVIEW.md and EXAMPLES.md for a package. You have been given the package's `documentation` directory root path.
 
 ## Write EXAMPLES.md
 
@@ -67,6 +67,10 @@ Here's the template for OVERVIEW.md (replace `{{variable}}`s with actual content
 ````markdown
 # {{package-name}}
 
+<!-- Insert a table of content of this document including sections in the original README. No internal link is needed. -->
+
+## Overview
+
 <!-- README content comes here -->
 
 ## Reading Guide
@@ -75,7 +79,7 @@ Use this guide to find what you need without exploring every file.
 
 ### Documentation structure
 
-Here's the structure of the documentation at {{documentation}}:
+Here's the structure of the documentation at {{documentation-root}}:
 
 <!-- Eliminate items if they don't exist -->
 

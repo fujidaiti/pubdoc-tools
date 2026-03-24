@@ -46,7 +46,7 @@ If multiple packages need enrichment, spawn them in parallel and wait for all to
 Always use this prompt template:
 
 ```
-Generate OVERVIEW.md and EXAMPLES.md for the package at <documentation-path>.
+Generate OVERVIEW.md and EXAMPLES.md for the package documentation at <documentation-path>.
 Read and follow this for additional instructions: ${CLAUDE_SKILL_DIR}/agents/doc-enrichment.md.
 ```
 
