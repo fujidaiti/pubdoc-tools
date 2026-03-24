@@ -3,5 +3,5 @@ dartdoc_txt/test/integration/fixture/
 dartdoc_txt/test/integration/golden/
 
 # Word wrap should not be applied to skill files.
-skill/
-!skill/README.md
+skill/pubdoc/
+skill/example/
