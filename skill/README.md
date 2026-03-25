@@ -129,8 +129,8 @@ Also, the skill itself:
 - **reads** the generated documentation to answer questions
 - **may add** the queried packages to the project's `pubspec.yaml` if they are
   not already included, as per the `pubdoc get` command's [requirements][].
-- **may write** summary files in the documentation directory to improve future
-  queries (experimental, see the next section for details)
+- **may write** summary files in the documentation directory (experimental, see
+  the next section for details)
 
 [pubdoc-get]:
   https://github.com/fujidaiti/pubdoc-tools/blob/main/pubdoc/USAGE.md#get
@@ -153,6 +153,12 @@ Also, the skill itself:
 >
 > Do not enable both plugins at the same time, otherwise it would confuse the
 > agent and cause unexpected behaviors.
+
+> [!WARNING]
+>
+> Currently this feature requires write permission to generate summary files.
+> That is, it will fail if the agent is running in a read-only environment such
+> as the Plan mode in Claude Code.
 
 The skill also writes summary files in the generated documentation to improve
 future queries:
