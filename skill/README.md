@@ -169,7 +169,7 @@ future queries:
 
 - `EXAMPLES.md`: a summary of the package's `example/` directory, if it exists.
 
-You can find examples of these summary files in [here](example).
+You can find examples of these summary files [here](example).
 
 ## Q&As
 
