@@ -1,28 +1,24 @@
 # Agent skill for pubdoc
 
-The [doc-explorer] is a [Claude Code skill][] that answers questions about
-Dart/Flutter packages using version-accurate documentation provided by the
-[pubdoc][] command.
+The [doc-explorer](plugin/doc-explorer) is a [Claude Code skill][] that answers
+questions about Dart/Flutter packages using version-accurate documentation
+provided by the [pubdoc][] command.
 
-See [CHAT.log][] for an example conversation with Claude Code demonstrating the
-skill in action.
-
-[doc-explorer]: skill/plugin/doc-explorer
 [Claude Code skill]: https://docs.anthropic.com/en/docs/claude-code/skills
-[CHAT.log]: example/CHAT.log
 [pubdoc]: https://github.com/fujidaiti/pubdoc-tools/tree/main/pubdoc
 
 ## Usage
 
-Typically you don't need to be aware of the skill; your agent automatically uses
-it when relevant. So just ask questions about Dart/Flutter packages or delegate
-implementation tasks to the agent as you normally would. For example:
+Typically you don't need to be aware of that skill; your agent automatically
+uses it when relevant. Just ask questions about Dart/Flutter packages or
+delegate implementation tasks to the agent as you normally would, for example:
 
 ```
 Help me migrate the app's navigation logic to use go_router
 ```
 
-Then the agent will decide to use the skill and execute a plan like this:
+Then the agent will decide to use the skill while building an implementation
+plan:
 
 ```
 ...
@@ -44,6 +40,9 @@ Then the agent will decide to use the skill and execute a plan like this:
 
 ...
 ```
+
+See [CHAT.log](example/CHAT.log) for an example conversation with Claude Code
+demonstrating the skill in action.
 
 ## Requirements
 
@@ -108,11 +107,64 @@ cp -r pubdoc-tools/skill/plugin/doc-explorer /path/to/your/.claude/skills/
 
 ## What content does the skill read/write?
 
-- create a doc directory in the cache (write)
+<!-- - create a doc directory in the cache (write)
 - read the doc directory to answer questions (read)
+- read the pub-cache directory to get the package source code (read)
 - may add packages to project's pubspec.yaml (write)
 - create summary files in the doc directory (write, experimental)
-  - install the experimental plugin instead of the stable one
+  - install the experimental plugin instead of the stable one -->
+
+This skill runs [pubdoc-get][] command to prepare the documentation for the
+queried packages, and the command:
+
+- **reads** `pubspec.lock` and `.dart_tool/` directory to find out the exact
+  package versions used in the project
+- **reads** the source code of the packages to generate documentation, which is
+  typically located in `~/.pub-cache/`
+- **writes** the generated documentation to a [cache][] directory, which is
+  typically located in `~/.pubdoc/cache/`
+
+Also, the skill itself:
+
+- **reads** the generated documentation to answer questions
+- **may add** the queried packages to the project's `pubspec.yaml` if they are
+  not already included, as per the `pubdoc get` command's [requirements][].
+- **may write** summary files in the documentation directory to improve future
+  queries (experimental, see the next section for details)
+
+[pubdoc-get]:
+  https://github.com/fujidaiti/pubdoc-tools/blob/main/pubdoc/USAGE.md#get
+[cache]:
+  https://github.com/fujidaiti/pubdoc-tools/blob/main/pubdoc/PRINCIPLE.md#shared-cache
+[requirements]:
+  https://github.com/fujidaiti/pubdoc-tools/blob/main/pubdoc/PRINCIPLE.md#requirements
+
+### Documentation enrichment
+
+> [!WARNING]
+>
+> This feature is unstable and not included in the `doc-explorer` skill from the
+> pubdoc-skills plugin. To enable it, install the pubdoc-skills-experimental
+> plugin instead:
+>
+> ```
+> /plugin install pubdoc-skills-experimental@norelease-dev-plugins
+> ```
+>
+> Do not enable both plugins at the same time, otherwise it would confuse the
+> agent and cause unexpected behaviors.
+
+The skill also writes summary files in the generated documentation to improve
+future queries:
+
+- `OVERVIEW.md`: a streamlined version of the package's README, stripping away
+  non-technical content and cosmetic elements such as HTML tags; also includes a
+  reading guide to the documentation.
+
+- `EXAMPLES.md`: a summary of the example code in the package's `example/`
+  directory, if it exists.
+
+You can find examples of these summary files in [here](example).
 
 ## Q&As
 
