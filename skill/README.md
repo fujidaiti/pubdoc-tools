@@ -1,57 +1,77 @@
-# pubdoc skill
+# Agent skill for pubdoc
 
-A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code/skills)
-that answers questions about Dart/Flutter packages using version-accurate
-documentation generated from the project's actual dependencies.
+A [Claude Code skill][] that answers questions about Dart/Flutter packages using
+version-accurate documentation provided by the [pubdoc][] command.
 
-See [CHAT.log](example/CHAT.example) for an example conversation with Claude
-Code demonstrating the skill in action.
+See [CHAT.log][] for an example conversation with Claude Code demonstrating the
+skill in action.
 
-## Why
+[Claude Code skill]: https://docs.anthropic.com/en/docs/claude-code/skills
+[CHAT.log]: example/CHAT.log
+[pubdoc]: https://github.com/fujidaiti/pubdoc-tools/tree/main/pubdoc
 
-Claude's training knowledge about package APIs may be outdated. This skill
-generates documentation directly from the packages installed in your project, so
-the information always matches the version you're actually using.
+## Usage
 
-## When it triggers
+WIP
 
-The skill activates whenever Claude needs to understand a package API before
-writing code — including:
+## Requirements
 
-- Implementing a feature with a third-party package
-- Debugging errors or stack traces that involve a package
-- Looking up method signatures or class behavior
-- Figuring out how to configure or integrate a package
-- Migrating to a new version of a package
+Under the hood, the skill uses pubdoc command to generate and manage the
+documentation for Dart/Flutter packages. Make sure that the command is installed
+globally. If not, you can install it via [dart install][] (requires Dart SDK
+3.10 or later):
 
-## How it works
-
-**Step 1 — Prepare:** A Dart script (`scripts/prepare_documentation.dart`)
-extracts package documentation from the project's dependencies and caches it
-locally.
-
-**Step 2 — Enrich:** For packages that lack structured summaries, a subagent
-generates `OVERVIEW.md` and `EXAMPLES.md` files to make exploration faster.
-
-**Step 3 — Explore:** A read-only subagent searches the documentation and
-returns findings for use in the main task.
-
-## Directory structure
-
+```shell
+dart install pubdoc
 ```
-pubdoc/
-├── SKILL.md                      # Skill definition and step-by-step instructions
-├── agents/
-│   ├── doc-enrichment.md         # Instructions for the enrichment subagent
-│   └── doc-explorer.md           # Instructions for the exploration subagent
-├── references/
-│   └── troubleshooting.md        # Error handling guidance for Step 1
-└── scripts/
-    └── prepare_documentation.dart # Extracts and caches package documentation
+
+Make sure the command is available in your PATH:
+
+```shell
+pubdoc --version
 ```
+
+[dart install]: https://dart.dev/tools/dart-install
 
 ## Installation
 
-Copy or symlink the `pubdoc/` directory into your Claude Code skills path
-(typically `~/.claude/skills/`), or follow the instructions in the
-[Claude Code skills documentation](https://docs.anthropic.com/en/docs/claude-code/skills).
+### Add from marketplace
+
+This option installs the skill as a plugin from this [marketplace][]. Launch
+Claude Code and add the marketplace first:
+
+```
+/plugin marketplace add fujidaiti/claude-plugin-marketplace
+```
+
+Then, install the plugin:
+
+```
+/plugin install pubdoc-skills@norelease-dev-plugins
+```
+
+[marketplace]: https://github.com/fujidaiti/claude-plugin-marketplace
+
+### Clone and load locally
+
+Alternatively, you can clone this repository and copy the skill directory to
+your `.claude/skills/`:
+
+```shell
+git clone https://github.com/fujidaiti/pubdoc-tools.git
+cp -r pubdoc-tools/skill/plugin/doc-explorer /path/to/your/.claude/skills/
+```
+
+## What content does the skill read/write?
+
+WIP
+
+## Q&As
+
+### My agent doesn't use the skill
+
+Try including this phrase in your prompt (e.g., in CLAUDE.md):
+
+```
+**Proactively** use the `pubdoc-skills:doc-explorer` skill.
+```
