@@ -12,7 +12,8 @@ skill in action.
 
 ## Usage
 
-WIP
+- When does the agent trigger the skill?
+- How to invoke the skill manually?
 
 ## Requirements
 
@@ -64,7 +65,11 @@ cp -r pubdoc-tools/skill/plugin/doc-explorer /path/to/your/.claude/skills/
 
 ## What content does the skill read/write?
 
-WIP
+- create a doc directory in the cache (write)
+- read the doc directory to answer questions (read)
+- may add packages to project's pubspec.yaml (write)
+- create summary files in the doc directory (write, experimental)
+  - install the experimental plugin instead of the stable one
 
 ## Q&As
 
