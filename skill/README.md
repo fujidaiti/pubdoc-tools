@@ -1,19 +1,49 @@
 # Agent skill for pubdoc
 
-A [Claude Code skill][] that answers questions about Dart/Flutter packages using
-version-accurate documentation provided by the [pubdoc][] command.
+The [doc-explorer] is a [Claude Code skill][] that answers questions about
+Dart/Flutter packages using version-accurate documentation provided by the
+[pubdoc][] command.
 
 See [CHAT.log][] for an example conversation with Claude Code demonstrating the
 skill in action.
 
+[doc-explorer]: skill/plugin/doc-explorer
 [Claude Code skill]: https://docs.anthropic.com/en/docs/claude-code/skills
 [CHAT.log]: example/CHAT.log
 [pubdoc]: https://github.com/fujidaiti/pubdoc-tools/tree/main/pubdoc
 
 ## Usage
 
-- When does the agent trigger the skill?
-- How to invoke the skill manually?
+Typically you don't need to be aware of the skill; your agent automatically uses
+it when relevant. So just ask questions about Dart/Flutter packages or delegate
+implementation tasks to the agent as you normally would. For example:
+
+```
+Help me migrate the app's navigation logic to use go_router
+```
+
+Then the agent will decide to use the skill and execute a plan like this:
+
+```
+...
+
+⏺ Now let me design the migration plan.
+
+⏺ Plan(Design go_router migration plan)
+  ⎿  Done (13 tool uses · 43.9k tokens · 1m 40s)
+  (ctrl+o to expand)
+
+⏺ Let me read the critical files and check the go_router API before finalizing.
+
+⏺ Read 3 files (ctrl+o to expand)
+
+⏺ Now let me check the go_router API documentation.
+
+⏺ Skill(pubdoc-skills:doc-explorer)
+  ⎿  Successfully loaded skill
+
+...
+```
 
 ## Requirements
 
@@ -51,6 +81,19 @@ Then, install the plugin:
 /plugin install pubdoc-skills@norelease-dev-plugins
 ```
 
+Now you should see the `doc-explorer` skill in your skill list:
+
+```
+/skills
+
+─────────────────────────────────────────────────────────────────────
+  Skills
+  1 skill
+
+  Plugin skills (plugin)
+  doc-explorer · pubdoc-skills · ~158 description tokens
+```
+
 [marketplace]: https://github.com/fujidaiti/claude-plugin-marketplace
 
 ### Clone and load locally
@@ -77,6 +120,6 @@ cp -r pubdoc-tools/skill/plugin/doc-explorer /path/to/your/.claude/skills/
 
 Try including this phrase in your prompt (e.g., in CLAUDE.md):
 
-```
+```markdown
 **Proactively** use the `pubdoc-skills:doc-explorer` skill.
 ```
