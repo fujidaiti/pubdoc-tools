@@ -16,7 +16,7 @@ import 'dart:io';
 ///
 /// Usage:
 /// ```shell
-/// dart prepare_documentation.dart [--project <path>] <pkg1> <pkg2> ...
+/// dart prepare_documentation.dart --project <path> <pkg1> <pkg2> ...
 /// ```
 ///
 /// Output JSON (success):
@@ -60,6 +60,8 @@ void main(List<String> args) {
 
   if (packages.isEmpty) {
     _exitWithError('No package names provided');
+  } else if (projectPath == null) {
+    _exitWithError('Project path not provided. Use --project <path>');
   }
 
   _ensurePubdocAvailable();
