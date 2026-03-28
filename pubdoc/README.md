@@ -1,8 +1,8 @@
 # pubdoc
 
-**pubdoc** is a CLI tool that provides LLM-friendly, version-aware API
+**pubdoc** is a CLI tool that provides LLM-friendly, version-accurate API
 documentation for Dart/Flutter packages. The documentation is LLM-friendly
-because it consists of structured plain text files, and version-aware because
+because it consists of structured plain text files, and version-accurate because
 pubdoc serves documentation for the specific versions your project depends on,
 not just the latest.
 
